@@ -24,8 +24,16 @@ export const Route = createFileRoute("/_authenticated/chat")({
 type Msg = { role: "user" | "assistant"; content: string };
 type Conv = { id: string; title: string };
 
-function HtmlPreview({ code }: { code: string }) {
+function HtmlPreview({ code, streaming }: { code: string; streaming?: boolean }) {
   const [tab, setTab] = useState<"run" | "code">("run");
+  if (streaming) {
+    return (
+      <div className="not-prose my-3 overflow-hidden rounded-xl border border-border bg-card">
+        <div className="flex items-center gap-2 border-b border-border px-3 py-2 text-xs text-primary"><span className="typing"><i /><i /><i /></span> ওয়েবসাইট তৈরি হচ্ছে… ({code.length} অক্ষর)</div>
+        <pre className="h-[200px] overflow-hidden p-3 text-xs text-muted-foreground"><code>{code.slice(-1500)}</code></pre>
+      </div>
+    );
+  }
   const [ok, setOk] = useState(false);
   const openFull = () => {
     const url = URL.createObjectURL(new Blob([code], { type: "text/html" }));
@@ -49,13 +57,33 @@ function HtmlPreview({ code }: { code: string }) {
   );
 }
 
-const mdComponents = {
+function LiveLinkCard({ href }: { href: string }) {
+  const [ok, setOk] = useState(false);
+  return (
+    <span className="not-prose my-3 flex flex-col gap-2 rounded-xl border border-primary/40 bg-primary/5 p-3">
+      <span className="break-all text-xs text-muted-foreground">{href}</span>
+      <span className="flex flex-wrap gap-2">
+        <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground no-underline">🌐 নতুন ট্যাবে ওয়েবসাইট খুলুন</a>
+        <button onClick={async () => { await navigator.clipboard.writeText(href); setOk(true); setTimeout(() => setOk(false), 1500); }} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm">{ok ? "✅ কপি হয়েছে" : "📋 লিংক কপি করুন"}</button>
+      </span>
+    </span>
+  );
+}
+
+const makeMd = (streaming: boolean) => ({
   code({ className, children, ...rest }: any) {
     const text = String(children ?? "");
-    if (/language-html/.test(className || "") && /<(html|body|!doctype)/i.test(text)) return <HtmlPreview code={text} />;
+    if (/language-html/.test(className || "") && /<(html|body|!doctype)/i.test(text)) return <HtmlPreview code={text} streaming={streaming} />;
     return <code className={className} {...rest}>{children}</code>;
   },
-};
+  a({ href, children }: any) {
+    const h = String(href ?? "");
+    if (typeof window !== "undefined" && h.startsWith(window.location.origin) && /\/(project\d+|p\/)/.test(h)) return <LiveLinkCard href={h} />;
+    return <a href={h} target="_blank" rel="noopener noreferrer">{children}</a>;
+  },
+});
+const mdDone = makeMd(false);
+const mdStreaming = makeMd(true);
 
 function printChat(msgs: Msg[]) {
   const w = window.open("", "_blank");
@@ -115,7 +143,7 @@ function ChatPage() {
     loadConvs();
   }, []);
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    endRef.current?.scrollIntoView({ behavior: loading ? "auto" : "smooth", block: "end" });
   }, [msgs]);
 
   const openConv = async (id: string) => {
@@ -232,7 +260,7 @@ function ChatPage() {
           if (pr.ok) {
             const { url } = await pr.json();
             const liveUrl = `${window.location.origin}${url}`;
-            full += `\n\n---\n\n### 🌐 লাইভ লিংক তৈরি হয়েছে\n\n**[${liveUrl}](${liveUrl})**\n\nলিংকে চাপ দিলেই ওয়েবসাইটটি সরাসরি খুলবে।`;
+            full += `\n\n---\n\n### 🌐 লাইভ লিংক তৈরি হয়েছে\n\n[${liveUrl}](${liveUrl})\n\nলিংকে চাপ দিলেই ওয়েবসাইটটি সরাসরি খুলবে।`;
             setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]);
           } else {
             full += `\n\n⚠️ লাইভ লিংক তৈরি করা যায়নি (${pr.status})। আবার চেষ্টা করুন।`;
@@ -331,7 +359,7 @@ function ChatPage() {
                     <p className="whitespace-pre-wrap">{m.content}</p>
                   ) : m.content ? (
                     <>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{m.content}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={loading && i === msgs.length - 1 ? mdStreaming : mdDone}>{m.content}</ReactMarkdown>
                       <div className="mt-1 flex gap-3 text-muted-foreground">
                         <button onClick={() => copy(m.content, i)} className="flex items-center gap-1 text-xs hover:text-primary" aria-label="কপি">{copied === i ? <Check size={15} /> : <Copy size={15} />}{copied === i ? "কপি হয়েছে" : "কপি"}</button>
                         <button onClick={() => { if (speaking === i) { window.speechSynthesis?.cancel(); setSpeaking(null); } else { speak(m.content); setSpeaking(i); } }} className="flex items-center gap-1 text-xs hover:text-primary" aria-label="শুনুন">{speaking === i ? <><Square size={14} /> থামান</> : <><Volume2 size={15} /> শুনুন</>}</button>

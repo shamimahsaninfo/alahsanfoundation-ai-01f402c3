@@ -23,6 +23,8 @@ export const Route = createFileRoute("/api/pages")({
         if (!parsed.success) return new Response("Invalid input", { status: 400 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: s } = await supabaseAdmin.from("ai_settings").select("site_builder").eq("id", 1).maybeSingle();
+        if (s && s.site_builder === false) return new Response("ওয়েবসাইট তৈরি বন্ধ আছে", { status: 403 });
         const { data, error } = await supabaseAdmin
           .from("pages")
           .insert({ user_id: u.user.id, title: parsed.data.title ?? null, html: parsed.data.html })

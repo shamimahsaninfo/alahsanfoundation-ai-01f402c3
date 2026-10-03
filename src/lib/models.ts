@@ -16,6 +16,7 @@ export const GOOGLE_MODELS = [
   { id: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
   { id: "gemini-flash-latest", label: "Gemini Flash (সর্বশেষ)" },
   { id: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro (সবচেয়ে শক্তিশালী)" },
+  { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
 ];
 
 export const OPENAI_MODELS = [

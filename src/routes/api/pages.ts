@@ -30,7 +30,10 @@ export const Route = createFileRoute("/api/pages")({
           .insert({ user_id: u.user.id, title: parsed.data.title ?? null, html: parsed.data.html })
           .select("id,num")
           .single();
-        if (error) return new Response("Save failed", { status: 500 });
+        if (error) {
+          console.error("page save failed", error);
+          return new Response(`ওয়েবসাইট সংরক্ষণ করা যায়নি: ${error.message}`, { status: 500 });
+        }
         return Response.json({ id: data.id, url: `/project${data.num}` });
       },
     },

@@ -26,6 +26,7 @@ type Conv = { id: string; title: string };
 
 function HtmlPreview({ code, streaming }: { code: string; streaming?: boolean }) {
   const [tab, setTab] = useState<"run" | "code">("run");
+  const [ok, setOk] = useState(false);
   if (streaming) {
     return (
       <div className="not-prose my-3 overflow-hidden rounded-xl border border-border bg-card">
@@ -34,7 +35,6 @@ function HtmlPreview({ code, streaming }: { code: string; streaming?: boolean })
       </div>
     );
   }
-  const [ok, setOk] = useState(false);
   const openFull = () => {
     const url = URL.createObjectURL(new Blob([code], { type: "text/html" }));
     window.open(url, "_blank");
@@ -219,29 +219,31 @@ function ChatPage() {
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = "";
+      const handle = (raw: string) => {
+        const line = raw.trim();
+        if (!line.startsWith("data:")) return;
+        const d = line.slice(5).trim();
+        if (!d || d === "[DONE]") return;
+        try {
+          const delta = JSON.parse(d).choices?.[0]?.delta?.content;
+          if (delta) {
+            full += delta;
+            setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]);
+          }
+        } catch { /* অসম্পূর্ণ/ভাঙা অংশ বাদ */ }
+      };
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buf += dec.decode(value, { stream: true });
         let i;
         while ((i = buf.indexOf("\n")) >= 0) {
-          const line = buf.slice(0, i).trim();
+          handle(buf.slice(0, i));
           buf = buf.slice(i + 1);
-          if (!line.startsWith("data:")) continue;
-          const d = line.slice(5).trim();
-          if (d === "[DONE]") continue;
-          try {
-            const delta = JSON.parse(d).choices?.[0]?.delta?.content;
-            if (delta) {
-              full += delta;
-              setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]);
-            }
-          } catch {
-            buf = line + "\n" + buf;
-            break;
-          }
         }
       }
+      buf += dec.decode();
+      buf.split("\n").forEach(handle);
     } catch (e: any) {
       if (e?.name !== "AbortError") full = full || `⚠️ ${e?.message || "ত্রুটি হয়েছে"}`;
       setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]);
@@ -271,6 +273,13 @@ function ChatPage() {
       await supabase.from("messages").insert({ conversation_id: convId, role: "assistant", content: full, user_id: user.id });
       await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", convId);
       if (voiceOut) speak(full);
+      supabase.auth.getSession().then(({ data: s3 }) =>
+        fetch("/api/memory", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${s3.session?.access_token}` },
+          body: JSON.stringify({ action: "extract", user: text.slice(0, 4000), assistant: full.slice(0, 4000) }),
+        }).catch(() => {}),
+      );
     }
     loadConvs();
   };

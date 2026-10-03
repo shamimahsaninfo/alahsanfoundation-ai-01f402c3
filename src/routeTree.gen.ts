@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiMemoryRouteImport } from './routes/api/memory'
 import { Route as ApiPagesRouteImport } from './routes/api/pages'
 import { Route as ApiSettingsRouteImport } from './routes/api/settings'
 import { Route as PIdRouteImport } from './routes/p/$id'
@@ -48,6 +49,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMemoryRoute = ApiMemoryRouteImport.update({
+  id: '/api/memory',
+  path: '/api/memory',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPagesRoute = ApiPagesRouteImport.update({
   id: '/api/pages',
   path: '/api/pages',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/chat': typeof AuthenticatedChatRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/memory': typeof ApiMemoryRoute
   '/api/pages': typeof ApiPagesRoute
   '/api/settings': typeof ApiSettingsRoute
   '/p/$id': typeof PIdRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/chat': typeof AuthenticatedChatRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/memory': typeof ApiMemoryRoute
   '/api/pages': typeof ApiPagesRoute
   '/api/settings': typeof ApiSettingsRoute
   '/p/$id': typeof PIdRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/memory': typeof ApiMemoryRoute
   '/api/pages': typeof ApiPagesRoute
   '/api/settings': typeof ApiSettingsRoute
   '/p/$id': typeof PIdRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/chat'
     | '/api/chat'
+    | '/api/memory'
     | '/api/pages'
     | '/api/settings'
     | '/p/$id'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/chat'
     | '/api/chat'
+    | '/api/memory'
     | '/api/pages'
     | '/api/settings'
     | '/p/$id'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/chat'
     | '/api/chat'
+    | '/api/memory'
     | '/api/pages'
     | '/api/settings'
     | '/p/$id'
@@ -135,6 +147,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   SlugRoute: typeof SlugRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiMemoryRoute: typeof ApiMemoryRoute
   ApiPagesRoute: typeof ApiPagesRoute
   ApiSettingsRoute: typeof ApiSettingsRoute
   PIdRoute: typeof PIdRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/memory': {
+      id: '/api/memory'
+      path: '/api/memory'
+      fullPath: '/api/memory'
+      preLoaderRoute: typeof ApiMemoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/pages': {
       id: '/api/pages'
       path: '/api/pages'
@@ -226,6 +246,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   SlugRoute: SlugRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiMemoryRoute: ApiMemoryRoute,
   ApiPagesRoute: ApiPagesRoute,
   ApiSettingsRoute: ApiSettingsRoute,
   PIdRoute: PIdRoute,

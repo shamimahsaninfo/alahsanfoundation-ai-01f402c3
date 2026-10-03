@@ -186,6 +186,15 @@ function AdminPage() {
         </section>
         <DriveMemory />
       </div>
+
+      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 p-4 backdrop-blur">
+        <div className="mx-auto flex max-w-3xl items-center gap-4">
+          <button onClick={save} className="flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground">
+            <Save size={18} /> সংরক্ষণ করুন
+          </button>
+          <span className="text-sm text-muted-foreground">{status}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -230,20 +239,3 @@ function DriveMemory() {
   );
 }
 
-function AdminFooterPlaceholder() {
-  return (
-    <div>
-      <div>
-      </div>
-
-      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 p-4 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center gap-4">
-          <button onClick={save} className="flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground">
-            <Save size={18} /> সংরক্ষণ করুন
-          </button>
-          <span className="text-sm text-muted-foreground">{status}</span>
-        </div>
-      </div>
-    </div>
-  );
-}

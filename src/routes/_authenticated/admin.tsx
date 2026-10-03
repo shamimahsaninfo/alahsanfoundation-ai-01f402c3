@@ -184,6 +184,7 @@ function AdminPage() {
           <label className="mt-3 block text-sm text-muted-foreground">প্রস্তাবিত প্রশ্ন (প্রতি লাইনে একটি)</label>
           <textarea value={s.suggestions} onChange={(e) => set("suggestions", e.target.value)} rows={5} className={`${input} mt-1`} />
         </section>
+        <DriveMemory />
       </div>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 p-4 backdrop-blur">

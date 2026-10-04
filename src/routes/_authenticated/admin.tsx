@@ -254,7 +254,7 @@ function KeyPool({ pool, setPool, show }: { pool: PoolKey[]; setPool: (p: PoolKe
   const upd = (i: number, patch: Partial<PoolKey>) => setPool(pool.map((p, j) => (j === i ? { ...p, ...patch } : p)));
   return (
     <section className="mt-6 rounded-2xl border border-border bg-card/80 p-6">
-      <h2 className="font-display text-xl text-primary">৫. অতিরিক্ত এপিআই কী (আনলিমিটেড)</h2>
+      <h2 className="font-display text-xl text-primary">৪ক. অতিরিক্ত এপিআই কী (আনলিমিটেড)</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         যত খুশি কী যোগ করুন, নিজের দেওয়া নামে। মূল কী কাজ না করলে (লিমিট শেষ হলে) এআই নিজে থেকেই তালিকার পরের কী দিয়ে চেষ্টা করবে। "অন্য সেবা" দিয়ে Groq, DeepSeek, OpenRouter-এর মতো যেকোনো সেবা যোগ করা যায়। যোগ করার পর নিচে "সংরক্ষণ করুন" চাপুন।
       </p>

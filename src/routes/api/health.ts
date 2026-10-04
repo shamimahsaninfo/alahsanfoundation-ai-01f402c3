@@ -57,7 +57,7 @@ export const Route = createFileRoute("/api/health")({
           const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: { Authorization: `Bearer ${k}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "google/gemini-3.1-flash-lite", messages: [{ role: "user", content: "ping" }], max_tokens: 5 }),
+            body: JSON.stringify({ model: "openai/gpt-6-astra", messages: [{ role: "user", content: "Reply with: ok" }] }),
           });
           if (!r.ok) throw new Error(`এআই উত্তর [${r.status}]`);
           await r.text();

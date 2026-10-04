@@ -34,13 +34,17 @@ function AdminPage() {
   const [gKey, setGKey] = useState("");
   const [oKey, setOKey] = useState("");
   const [show, setShow] = useState(false);
+  const [pool, setPool] = useState<PoolKey[]>([]);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
     if (!admin) return;
     supabase.from("ai_settings").select("*").eq("id", 1).maybeSingle().then(({ data }) => data && setS(data as unknown as S));
     supabase.from("ai_keys").select("*").eq("id", 1).maybeSingle().then(({ data }) => {
-      if (data) { setGKey(data.google_key); setOKey(data.openai_key); }
+      if (data) {
+        setGKey(data.google_key); setOKey(data.openai_key);
+        setPool(Array.isArray(data.key_pool) ? (data.key_pool as unknown as PoolKey[]) : []);
+      }
     });
   }, [admin]);
 
@@ -69,7 +73,8 @@ function AdminPage() {
       daily_limit: Math.max(1, s.daily_limit || 1),
       updated_at: new Date().toISOString(),
     }).eq("id", 1);
-    const r2 = await supabase.from("ai_keys").update({ google_key: gKey.trim(), openai_key: oKey.trim(), updated_at: new Date().toISOString() }).eq("id", 1);
+    const cleanPool = pool.filter((p) => p.key.trim()).map((p) => ({ ...p, name: p.name.trim() || p.provider, key: p.key.trim() }));
+    const r2 = await supabase.from("ai_keys").update({ google_key: gKey.trim(), openai_key: oKey.trim(), key_pool: cleanPool, updated_at: new Date().toISOString() }).eq("id", 1);
     const err = r1.error || r2.error;
     setStatus(err ? `ত্রুটি: ${err.message}` : "✓ সংরক্ষিত হয়েছে। এআই এখন থেকেই নতুন সেটিং অনুযায়ী চলবে।");
   };
@@ -184,7 +189,9 @@ function AdminPage() {
           <label className="mt-3 block text-sm text-muted-foreground">প্রস্তাবিত প্রশ্ন (প্রতি লাইনে একটি)</label>
           <textarea value={s.suggestions} onChange={(e) => set("suggestions", e.target.value)} rows={5} className={`${input} mt-1`} />
         </section>
+        <KeyPool pool={pool} setPool={setPool} show={show} />
         <DriveMemory />
+        <HealthCheck />
       </div>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 p-4 backdrop-blur">

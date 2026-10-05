@@ -90,9 +90,7 @@ function LiveLinkCard({ href }: { href: string }) {
 const makeMd = (streaming: boolean) => ({
   code({ className, children, ...rest }: any) {
     const text = String(children ?? "");
-    if ((/language-html/.test(className || "") || /<(html|!doctype|body)/i.test(text)) && text.length > 50) {
-      return <HtmlPreview code={text} streaming={streaming} />;
-    }
+    if (/language-html/.test(className || "") && /<(html|body|!doctype)/i.test(text)) return <HtmlPreview code={text} streaming={streaming} />;
     return <code className={className} {...rest}>{children}</code>;
   },
   a({ href, children }: any) {
@@ -146,33 +144,19 @@ function ChatPage() {
   const [image, setImage] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const pickImage = (file: File) => {
-    if (!file.type.startsWith("image/") && !/\.(png|jpe?g|webp|gif|bmp|heic|svg)$/i.test(file.name)) {
-      return alert("অনুগ্রহ করে একটি ছবি ফাইল নির্বাচন করুন।");
-    }
+    if (!file.type.startsWith("image/")) return alert("শুধু ছবি পাঠানো যাবে।");
     const reader = new FileReader();
     reader.onload = () => {
       const im = new Image();
       im.onload = () => {
-        const maxDim = 1280;
-        const scale = Math.min(1, maxDim / Math.max(im.width, im.height));
+        const scale = Math.min(1, 1280 / Math.max(im.width, im.height));
         const c = document.createElement("canvas");
-        c.width = Math.max(1, Math.round(im.width * scale));
-        c.height = Math.max(1, Math.round(im.height * scale));
-        const ctx = c.getContext("2d");
-        if (!ctx) return alert("ছবি প্রসেস করা যায়নি।");
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(0, 0, c.width, c.height);
-        ctx.drawImage(im, 0, 0, c.width, c.height);
-        setImage(c.toDataURL("image/jpeg", 0.82));
+        c.width = Math.round(im.width * scale);
+        c.height = Math.round(im.height * scale);
+        c.getContext("2d")!.drawImage(im, 0, 0, c.width, c.height);
+        setImage(c.toDataURL("image/jpeg", 0.85));
       };
-      im.onerror = () => {
-        // Fallback for svg/direct image
-        if (typeof reader.result === "string" && reader.result.startsWith("data:image/")) {
-          setImage(reader.result);
-        } else {
-          alert("ছবিটি খোলা যায়নি। অন্য ফরম্যাটের ছবি চেষ্টা করুন।");
-        }
-      };
+      im.onerror = () => alert("ছবিটি খোলা যায়নি।");
       im.src = String(reader.result);
     };
     reader.readAsDataURL(file);

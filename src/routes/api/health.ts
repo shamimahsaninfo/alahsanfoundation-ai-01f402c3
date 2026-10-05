@@ -125,27 +125,71 @@ export const Route = createFileRoute("/api/health")({
             }
             cands.push({ label: String(p?.name ?? p?.provider ?? "কী-পুল"), url, key, model, isOpenAI });
           }
-          if (!cands.length) throw new Error("কোনো সক্রিয় চ্যাট কী নেই");
+          if (!cands.length) throw new Error("কোনো সক্রিয় চ্যাট কী পাওয়া যায়নি");
+
+          // গুগল কী থাকলে gemini-2.0-flash ও অতিরিক্ত অপশন হিসেবে যোগ করা
+          if (gk) {
+            cands.push({
+              label: "Google OpenAI (gemini-2.0-flash)",
+              url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+              key: gk,
+              model: "gemini-2.0-flash",
+              isOpenAI: true,
+            });
+          }
+
           const errs: string[] = [];
           for (const c of cands) {
             let r: Response;
-            if (c.isOpenAI) {
-              r = await fetch(c.url, {
-                method: "POST",
-                headers: { Authorization: `Bearer ${c.key}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ model: c.model, max_tokens: 5, messages: [{ role: "user", content: "ping" }] }),
-              }).catch((e) => new Response(String(e), { status: 502 }));
-            } else {
-              r = await fetch(c.url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] }),
-              }).catch((e) => new Response(String(e), { status: 502 }));
+            try {
+              if (c.isOpenAI) {
+                r = await fetch(c.url, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${c.key}`, "Content-Type": "application/json" },
+                  body: JSON.stringify({ model: c.model, max_tokens: 5, messages: [{ role: "user", content: "ping" }] }),
+                });
+              } else {
+                r = await fetch(c.url, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] }),
+                });
+              }
+            } catch (netErr: any) {
+              r = new Response(JSON.stringify({ error: { message: netErr?.message || "নেটওয়ার্ক টাইমআউট বা সংযোগ বিচ্ছিন্ন" } }), { status: 502 });
             }
-            if (r.ok) return `এআই দ্রুত উত্তর দিচ্ছে — ${c.label}${errs.length ? ` (বিকল্প কী ব্যবহৃত)` : ""}`;
-            errs.push(`${c.label} [${r.status}]`);
+
+            if (r.ok) {
+              return `এআই দ্রুত সাড়া দিচ্ছে — প্রোভাইডার: ${c.label} | মডেল: ${c.model} (সফল)`;
+            }
+
+            // রেসপন্স বডি থেকে নির্দিষ্ট কারণ সংগ্রহ
+            const errRaw = await r.text().catch(() => "");
+            let reason = "";
+            try {
+              const parsed = JSON.parse(errRaw);
+              reason = parsed?.error?.message || parsed?.message || parsed?.error || "";
+            } catch {
+              reason = errRaw.slice(0, 150);
+            }
+            if (!reason) reason = r.statusText || "অজানা ত্রুটি";
+
+            // স্ট্যাটাস ভিত্তিক নির্দিষ্ট সমাধানের পরামর্শ
+            let solution = "";
+            if (r.status === 404) {
+              solution = "মডেল নাম অমিল বা এন্ডপয়েন্ট ভুল। AI Settings-এ গিয়ে সক্রিয় মডেল (যেমন gemini-2.0-flash) নির্বাচন করুন।";
+            } else if (r.status === 401 || r.status === 403) {
+              solution = "API Key মেয়াদোত্তীর্ণ বা অনুমতি নেই। নতুন চাবি সংগ্রহ করে সংরক্ষণ করুন।";
+            } else if (r.status === 429) {
+              solution = "কোটা শেষ (Rate Limit)। কিছুক্ষণ পর চেষ্টা করুন বা বিকল্প ব্যাকআপ প্রোভাইডার চালু করুন।";
+            } else {
+              solution = "প্রোভাইডারের সার্ভার সমস্যা। AI Settings-এ ব্যাকআপ প্রোভাইডার নির্বাচন করুন।";
+            }
+
+            errs.push(`• [${c.label}] নির্বাচিত মডেল: ${c.model} → HTTP [${r.status}] | কারণ: ${reason.slice(0, 100)} | সমাধান: ${solution}`);
           }
-          throw new Error(`সব কী ব্যর্থ: ${errs.join(", ")}`);
+
+          throw new Error(`চ্যাট সার্ভিস ব্যর্থ হয়েছে:\n${errs.join("\n")}`);
         }));
 
         checks.push(await timed("মেমোরি ও স্টোরেজ ব্যাকআপ", async () => {

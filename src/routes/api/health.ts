@@ -52,16 +52,31 @@ export const Route = createFileRoute("/api/health")({
         }));
 
         checks.push(await timed("চ্যাট পরিষেবা", async () => {
-          const k = process.env["LOVABLE_API_KEY"];
-          if (!k) throw new Error("বিল্ট-ইন এআই কী নেই");
-          const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${k}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "openai/gpt-6-astra", messages: [{ role: "user", content: "Reply with: ok" }] }),
-          });
-          if (!r.ok) throw new Error(`এআই উত্তর [${r.status}]`);
-          await r.text();
-          return "এআই উত্তর দিচ্ছে";
+          type Cand = { label: string; url: string; key: string; model: string };
+          const cands: Cand[] = [];
+          const gk = keys?.google_key?.trim() || process.env["GOOGLE_API_KEY"];
+          if (gk) cands.push({ label: "Google", url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", key: gk, model: "gemini-2.5-flash" });
+          const pool = Array.isArray(keys?.key_pool) ? (keys!.key_pool as Record<string, unknown>[]) : [];
+          for (const p of pool) {
+            const key = String(p?.key ?? p?.api_key ?? "").trim();
+            const base = String(p?.base_url ?? p?.baseUrl ?? "").trim().replace(/\/$/, "");
+            if (!key || p?.active === false) continue;
+            const url = base ? `${base}/chat/completions` : "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+            cands.push({ label: String(p?.name ?? p?.provider ?? "কী-পুল"), url, key, model: String(p?.model || "gemini-2.5-flash") });
+          }
+          if (!cands.length) throw new Error("কোনো সক্রিয় চ্যাট কী নেই");
+          const errs: string[] = [];
+          for (const c of cands) {
+            const r = await fetch(c.url, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${c.key}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ model: c.model, max_tokens: 5, messages: [{ role: "user", content: "Reply with: ok" }] }),
+            });
+            await r.text();
+            if (r.ok) return `এআই উত্তর দিচ্ছে — ${c.label}${errs.length ? ` (বিকল্প কী ব্যবহৃত)` : ""}`;
+            errs.push(`${c.label} [${r.status}]`);
+          }
+          throw new Error(`সব কী ব্যর্থ: ${errs.join(", ")}`);
         }));
 
         const results = { checks, at: new Date().toISOString() };

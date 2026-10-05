@@ -397,7 +397,19 @@ function HealthCheck() {
               </span>
               <div>
                 <span className="font-semibold text-foreground">{c.name}</span>
-                <p className="text-xs text-muted-foreground mt-0.5">{c.detail}</p>
+                <div className="mt-1">
+                  {c.detail.includes("\n") ? (
+                    <div className="space-y-1.5 mt-2">
+                      {c.detail.split("\n").map((line, idx) => (
+                        <div key={idx} className={`text-xs p-2 rounded-lg ${line.startsWith("•") ? "bg-background/80 border border-destructive/20 text-foreground font-mono" : "text-muted-foreground font-medium"}`}>
+                          {line}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{c.detail}</p>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2.5 shrink-0 ml-auto">

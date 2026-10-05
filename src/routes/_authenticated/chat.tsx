@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Mic, MicOff, Send, Plus, Trash2, Volume2, VolumeX, LogOut, Shield, Menu, Square, Copy, Check, Search, Printer, Download, Maximize2, Code2, MonitorPlay, ExternalLink, ImagePlus } from "lucide-react";
+import { Mic, MicOff, Send, Plus, Trash2, Volume2, VolumeX, LogOut, Shield, Menu, Square, Copy, Check, Search, Printer, Download, Maximize2, Code2, MonitorPlay, ExternalLink } from "lucide-react";
 
 const STEPS = ["বোঝা", "পরিকল্পনা", "নির্মাণ", "যাচাই", "সংশোধন", "প্রিভিউ"];
 function WorkflowStepper({ stage }: { stage: number }) {
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_authenticated/chat")({
   component: ChatPage,
 });
 
-type Msg = { role: "user" | "assistant"; content: string; image?: string };
+type Msg = { role: "user" | "assistant"; content: string };
 type Conv = { id: string; title: string };
 
 function HtmlPreview({ code, streaming }: { code: string; streaming?: boolean }) {
@@ -141,28 +141,7 @@ function ChatPage() {
   const [active, setActive] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
-  const [image, setImage] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const pickImage = (file: File) => {
-    if (!file.type.startsWith("image/")) return alert("শুধু ছবি পাঠানো যাবে।");
-    const reader = new FileReader();
-    reader.onload = () => {
-      const im = new Image();
-      im.onload = () => {
-        const scale = Math.min(1, 1280 / Math.max(im.width, im.height));
-        const c = document.createElement("canvas");
-        c.width = Math.round(im.width * scale);
-        c.height = Math.round(im.height * scale);
-        c.getContext("2d")!.drawImage(im, 0, 0, c.width, c.height);
-        setImage(c.toDataURL("image/jpeg", 0.85));
-      };
-      im.onerror = () => alert("ছবিটি খোলা যায়নি।");
-      im.src = String(reader.result);
-    };
-    reader.readAsDataURL(file);
-  };
   const [loading, setLoading] = useState(false);
-  const [post, setPost] = useState<number | null>(null);
   const [voiceOut, setVoiceOut] = useState(false);
   const [listening, setListening] = useState(false);
   const [sidebar, setSidebar] = useState(false);
@@ -228,11 +207,9 @@ function ChatPage() {
   };
 
   const send = async () => {
-    const img = image;
-    const text = input.trim() || (img ? "এই ছবিটি বিশ্লেষণ করুন।" : "");
+    const text = input.trim();
     if (!text || loading) return;
     setInput("");
-    setImage(null);
     let convId = active;
     if (!convId) {
       const { data, error } = await supabase.from("conversations").insert({ title: text.slice(0, 60), user_id: user.id }).select("id").single();
@@ -240,11 +217,10 @@ function ChatPage() {
       convId = data.id;
       setActive(convId);
     }
-    const history: Msg[] = [...msgs, { role: "user", content: text, ...(img ? { image: img } : {}) }];
+    const history: Msg[] = [...msgs, { role: "user", content: text }];
     setMsgs([...history, { role: "assistant", content: "" }]);
-    setPost(null);
     setLoading(true);
-    await supabase.from("messages").insert({ conversation_id: convId, role: "user", content: img ? `[ছবি সংযুক্ত] ${text}` : text, user_id: user.id });
+    await supabase.from("messages").insert({ conversation_id: convId, role: "user", content: text, user_id: user.id });
 
     let full = "";
     try {
@@ -253,7 +229,7 @@ function ChatPage() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.session?.access_token}` },
-        body: JSON.stringify({ messages: history.slice(-40).map((m, i, arr) => (i === arr.length - 1 ? m : { role: m.role, content: m.content })) }),
+        body: JSON.stringify({ messages: history.slice(-40) }),
         signal: abortRef.current.signal,
       });
       if (!res.ok || !res.body) throw new Error(await res.text());
@@ -289,12 +265,10 @@ function ChatPage() {
       if (e?.name !== "AbortError") full = full || `ত্রুটি: ${e?.message || "ত্রুটি হয়েছে"}`;
       setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]);
     }
-    setPost(3);
     setLoading(false);
     if (full) {
       const htmlCode = full.match(/```html\s*\n([\s\S]*?)(?:```|$)/i)?.[1];
       if (htmlCode && /<html/i.test(htmlCode)) {
-        setPost(4);
         try {
           const { data: s2 } = await supabase.auth.getSession();
           const pr = await fetch("/api/pages", {
@@ -324,8 +298,6 @@ function ChatPage() {
         }).catch(() => {}),
       );
     }
-    setPost(5);
-    setTimeout(() => setPost(null), 1800);
     loadConvs();
   };
 
@@ -410,27 +382,17 @@ function ChatPage() {
               <div key={i} className={`mb-5 flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={m.role === "user" ? "max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-3 text-primary-foreground" : "prose-ai max-w-full flex-1"}>
                   {m.role === "user" ? (
+                    <p className="whitespace-pre-wrap">{m.content}</p>
+                  ) : m.content ? (
                     <>
-                      {m.image && <img src={m.image} alt="পাঠানো ছবি" className="mb-2 max-h-64 rounded-lg" />}
-                      <p className="whitespace-pre-wrap">{m.content}</p>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={loading && i === msgs.length - 1 ? mdStreaming : mdDone}>{m.content}</ReactMarkdown>
+                      <div className="mt-1 flex gap-3 text-muted-foreground">
+                        <button onClick={() => copy(m.content, i)} className="flex items-center gap-1 text-xs hover:text-primary" aria-label="কপি">{copied === i ? <Check size={15} /> : <Copy size={15} />}{copied === i ? "কপি হয়েছে" : "কপি"}</button>
+                        <button onClick={() => { if (speaking === i) { window.speechSynthesis?.cancel(); setSpeaking(null); } else { speak(m.content); setSpeaking(i); } }} className="flex items-center gap-1 text-xs hover:text-primary" aria-label="শুনুন">{speaking === i ? <><Square size={14} /> থামান</> : <><Volume2 size={15} /> শুনুন</>}</button>
+                      </div>
                     </>
                   ) : (
-                    <>
-                      {i === msgs.length - 1 && (loading || post !== null) && (
-                        <WorkflowStepper stage={post ?? (!m.content ? 0 : m.content.length < 300 ? 1 : 2)} />
-                      )}
-                      {m.content ? (
-                        <>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={loading && i === msgs.length - 1 ? mdStreaming : mdDone}>{m.content}</ReactMarkdown>
-                          <div className="mt-1 flex gap-3 text-muted-foreground">
-                            <button onClick={() => copy(m.content, i)} className="flex items-center gap-1 text-xs hover:text-primary" aria-label="কপি">{copied === i ? <Check size={15} /> : <Copy size={15} />}{copied === i ? "কপি হয়েছে" : "কপি"}</button>
-                            <button onClick={() => { if (speaking === i) { window.speechSynthesis?.cancel(); setSpeaking(null); } else { speak(m.content); setSpeaking(i); } }} className="flex items-center gap-1 text-xs hover:text-primary" aria-label="শুনুন">{speaking === i ? <><Square size={14} /> থামান</> : <><Volume2 size={15} /> শুনুন</>}</button>
-                          </div>
-                        </>
-                      ) : (
-                        <span className="typing"><i /><i /><i /></span>
-                      )}
-                    </>
+                    <span className="typing"><i /><i /><i /></span>
                   )}
                 </div>
               </div>
@@ -441,8 +403,6 @@ function ChatPage() {
 
         <div className="border-t border-border/60 p-4">
           <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-border bg-card p-2 focus-within:border-primary/60">
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) pickImage(f); e.target.value = ""; }} />
-            <button onClick={() => fileRef.current?.click()} className="rounded-xl p-3 text-primary hover:bg-primary/10" aria-label="ছবি যুক্ত করুন" title="ছবি যুক্ত করুন"><ImagePlus size={20} /></button>
             <button onClick={toggleMic} className={`rounded-xl p-3 ${listening ? "animate-pulse bg-destructive text-destructive-foreground" : "text-primary hover:bg-primary/10"}`} aria-label="ভয়েস">
               {listening ? <MicOff size={20} /> : <Mic size={20} />}
             </button>
@@ -457,7 +417,7 @@ function ChatPage() {
             {loading ? (
               <button onClick={() => abortRef.current?.abort()} className="rounded-xl bg-secondary p-3" aria-label="থামান"><Square size={20} /></button>
             ) : (
-              <button onClick={send} disabled={!input.trim() && !image} className="rounded-xl bg-primary p-3 text-primary-foreground disabled:opacity-40" aria-label="পাঠান"><Send size={20} /></button>
+              <button onClick={send} disabled={!input.trim()} className="rounded-xl bg-primary p-3 text-primary-foreground disabled:opacity-40" aria-label="পাঠান"><Send size={20} /></button>
             )}
           </div>
         </div>

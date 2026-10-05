@@ -56,7 +56,7 @@ export const Route = createFileRoute("/api/health")({
           const cands: Cand[] = [];
           const gk = keys?.google_key?.trim() || process.env["GOOGLE_API_KEY"];
           if (gk) cands.push({ label: "Google", url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", key: gk, model: "gemini-2.5-flash" });
-          const pool = Array.isArray(keys?.key_pool) ? (keys!.key_pool as Record<string, unknown>[]) : [];
+          const pool = Array.isArray(keys?.key_pool) ? (keys!.key_pool as any[]) : [];
           for (const p of pool) {
             const key = String(p?.key ?? p?.api_key ?? "").trim();
             const base = String(p?.base_url ?? p?.baseUrl ?? "").trim().replace(/\/$/, "");

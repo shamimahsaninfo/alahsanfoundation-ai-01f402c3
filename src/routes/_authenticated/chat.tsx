@@ -142,6 +142,7 @@ function ChatPage() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [post, setPost] = useState<number | null>(null);
   const [voiceOut, setVoiceOut] = useState(false);
   const [listening, setListening] = useState(false);
   const [sidebar, setSidebar] = useState(false);
@@ -265,10 +266,12 @@ function ChatPage() {
       if (e?.name !== "AbortError") full = full || `ত্রুটি: ${e?.message || "ত্রুটি হয়েছে"}`;
       setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]);
     }
+    setPost(3);
     setLoading(false);
     if (full) {
       const htmlCode = full.match(/```html\s*\n([\s\S]*?)(?:```|$)/i)?.[1];
       if (htmlCode && /<html/i.test(htmlCode)) {
+        setPost(4);
         try {
           const { data: s2 } = await supabase.auth.getSession();
           const pr = await fetch("/api/pages", {
@@ -383,16 +386,23 @@ function ChatPage() {
                 <div className={m.role === "user" ? "max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-3 text-primary-foreground" : "prose-ai max-w-full flex-1"}>
                   {m.role === "user" ? (
                     <p className="whitespace-pre-wrap">{m.content}</p>
-                  ) : m.content ? (
-                    <>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={loading && i === msgs.length - 1 ? mdStreaming : mdDone}>{m.content}</ReactMarkdown>
-                      <div className="mt-1 flex gap-3 text-muted-foreground">
-                        <button onClick={() => copy(m.content, i)} className="flex items-center gap-1 text-xs hover:text-primary" aria-label="কপি">{copied === i ? <Check size={15} /> : <Copy size={15} />}{copied === i ? "কপি হয়েছে" : "কপি"}</button>
-                        <button onClick={() => { if (speaking === i) { window.speechSynthesis?.cancel(); setSpeaking(null); } else { speak(m.content); setSpeaking(i); } }} className="flex items-center gap-1 text-xs hover:text-primary" aria-label="শুনুন">{speaking === i ? <><Square size={14} /> থামান</> : <><Volume2 size={15} /> শুনুন</>}</button>
-                      </div>
-                    </>
                   ) : (
-                    <span className="typing"><i /><i /><i /></span>
+                    <>
+                      {i === msgs.length - 1 && (loading || post !== null) && (
+                        <WorkflowStepper stage={post ?? (!m.content ? 0 : m.content.length < 300 ? 1 : 2)} />
+                      )}
+                      {m.content ? (
+                        <>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={loading && i === msgs.length - 1 ? mdStreaming : mdDone}>{m.content}</ReactMarkdown>
+                          <div className="mt-1 flex gap-3 text-muted-foreground">
+                            <button onClick={() => copy(m.content, i)} className="flex items-center gap-1 text-xs hover:text-primary" aria-label="কপি">{copied === i ? <Check size={15} /> : <Copy size={15} />}{copied === i ? "কপি হয়েছে" : "কপি"}</button>
+                            <button onClick={() => { if (speaking === i) { window.speechSynthesis?.cancel(); setSpeaking(null); } else { speak(m.content); setSpeaking(i); } }} className="flex items-center gap-1 text-xs hover:text-primary" aria-label="শুনুন">{speaking === i ? <><Square size={14} /> থামান</> : <><Volume2 size={15} /> শুনুন</>}</button>
+                          </div>
+                        </>
+                      ) : (
+                        <span className="typing"><i /><i /><i /></span>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

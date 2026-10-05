@@ -34,13 +34,17 @@ function AdminPage() {
   const [gKey, setGKey] = useState("");
   const [oKey, setOKey] = useState("");
   const [show, setShow] = useState(false);
+  const [pool, setPool] = useState<PoolKey[]>([]);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
     if (!admin) return;
     supabase.from("ai_settings").select("*").eq("id", 1).maybeSingle().then(({ data }) => data && setS(data as unknown as S));
     supabase.from("ai_keys").select("*").eq("id", 1).maybeSingle().then(({ data }) => {
-      if (data) { setGKey(data.google_key); setOKey(data.openai_key); }
+      if (data) {
+        setGKey(data.google_key); setOKey(data.openai_key);
+        setPool(Array.isArray(data.key_pool) ? (data.key_pool as unknown as PoolKey[]) : []);
+      }
     });
   }, [admin]);
 
@@ -69,7 +73,8 @@ function AdminPage() {
       daily_limit: Math.max(1, s.daily_limit || 1),
       updated_at: new Date().toISOString(),
     }).eq("id", 1);
-    const r2 = await supabase.from("ai_keys").update({ google_key: gKey.trim(), openai_key: oKey.trim(), updated_at: new Date().toISOString() }).eq("id", 1);
+    const cleanPool = pool.filter((p) => p.key.trim()).map((p) => ({ ...p, name: p.name.trim() || p.provider, key: p.key.trim() }));
+    const r2 = await supabase.from("ai_keys").update({ google_key: gKey.trim(), openai_key: oKey.trim(), key_pool: cleanPool, updated_at: new Date().toISOString() }).eq("id", 1);
     const err = r1.error || r2.error;
     setStatus(err ? `ত্রুটি: ${err.message}` : "✓ সংরক্ষিত হয়েছে। এআই এখন থেকেই নতুন সেটিং অনুযায়ী চলবে।");
   };
@@ -184,7 +189,9 @@ function AdminPage() {
           <label className="mt-3 block text-sm text-muted-foreground">প্রস্তাবিত প্রশ্ন (প্রতি লাইনে একটি)</label>
           <textarea value={s.suggestions} onChange={(e) => set("suggestions", e.target.value)} rows={5} className={`${input} mt-1`} />
         </section>
+        <KeyPool pool={pool} setPool={setPool} show={show} />
         <DriveMemory />
+        <HealthCheck />
       </div>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 p-4 backdrop-blur">
@@ -196,5 +203,134 @@ function AdminPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function DriveMemory() {
+  const [items, setItems] = useState<{ text: string }[] | null>(null);
+  const [err, setErr] = useState("");
+  const [text, setText] = useState("");
+  const call = async (body: object) => {
+    setErr("");
+    const { data } = await supabase.auth.getSession();
+    const r = await fetch("/api/memory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token}` },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) return setErr(await r.text());
+    const j = await r.json();
+    if (j.items) setItems(j.items);
+  };
+  useEffect(() => { call({ action: "list" }); }, []);
+  return (
+    <section className="mt-6 rounded-2xl border border-border bg-card/80 p-6">
+      <h2 className="font-display text-xl text-primary">৮. গুগল ড্রাইভ স্মৃতি</h2>
+      <p className="mt-1 text-sm text-muted-foreground">এআই যা স্থায়ীভাবে মনে রাখে। ভুল কিছু থাকলে মুছে দিন।</p>
+      {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
+      {!items && !err && <p className="mt-3 text-sm text-muted-foreground">লোড হচ্ছে…</p>}
+      <ul className="mt-3 space-y-2">
+        {items?.map((m, i) => (
+          <li key={i} className="flex items-start justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
+            <span>{m.text}</span>
+            <button onClick={() => call({ action: "delete", index: i })} className="text-destructive">মুছুন</button>
+          </li>
+        ))}
+        {items?.length === 0 && <li className="text-sm text-muted-foreground">এখনো কোনো স্মৃতি নেই।</li>}
+      </ul>
+      <div className="mt-3 flex gap-2">
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="নতুন কিছু মনে রাখাতে লিখুন…" className="w-full rounded-lg border border-input bg-background px-3 py-2 outline-none focus:border-primary" />
+        <button onClick={() => { if (text.trim().length >= 3) { call({ action: "add", text }); setText(""); } }} className="rounded-lg bg-primary px-4 text-primary-foreground">যোগ</button>
+      </div>
+    </section>
+  );
+}
+
+
+type PoolKey = { name: string; provider: "google" | "openai" | "custom"; key: string; base_url?: string; model?: string; active: boolean };
+
+function KeyPool({ pool, setPool, show }: { pool: PoolKey[]; setPool: (p: PoolKey[]) => void; show: boolean }) {
+  const input = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary";
+  const upd = (i: number, patch: Partial<PoolKey>) => setPool(pool.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+  return (
+    <section className="mt-6 rounded-2xl border border-border bg-card/80 p-6">
+      <h2 className="font-display text-xl text-primary">৪ক. অতিরিক্ত এপিআই কী (আনলিমিটেড)</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        যত খুশি কী যোগ করুন, নিজের দেওয়া নামে। মূল কী কাজ না করলে (লিমিট শেষ হলে) এআই নিজে থেকেই তালিকার পরের কী দিয়ে চেষ্টা করবে। "অন্য সেবা" দিয়ে Groq, DeepSeek, OpenRouter-এর মতো যেকোনো সেবা যোগ করা যায়। যোগ করার পর নিচে "সংরক্ষণ করুন" চাপুন।
+      </p>
+      <div className="mt-4 space-y-3">
+        {pool.map((p, i) => (
+          <div key={i} className="space-y-2 rounded-xl border border-border p-3">
+            <div className="flex gap-2">
+              <input value={p.name} onChange={(e) => upd(i, { name: e.target.value })} placeholder="নাম (যেমন: Google কী ২)" className={input} />
+              <select value={p.provider} onChange={(e) => upd(i, { provider: e.target.value as PoolKey["provider"] })} className={`${input} max-w-[9rem]`}>
+                <option value="google">Google</option>
+                <option value="openai">OpenAI</option>
+                <option value="custom">অন্য সেবা</option>
+              </select>
+            </div>
+            <input type={show ? "text" : "password"} value={p.key} onChange={(e) => upd(i, { key: e.target.value })} placeholder="এপিআই কী" className={input} />
+            {p.provider === "custom" && (
+              <div className="flex gap-2">
+                <input value={p.base_url ?? ""} onChange={(e) => upd(i, { base_url: e.target.value })} placeholder="ঠিকানা, যেমন https://api.groq.com/openai/v1" className={input} />
+                <input value={p.model ?? ""} onChange={(e) => upd(i, { model: e.target.value })} placeholder="মডেলের নাম" className={input} />
+              </div>
+            )}
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={p.active} onChange={(e) => upd(i, { active: e.target.checked })} /> চালু
+              </label>
+              <button onClick={() => setPool(pool.filter((_, j) => j !== i))} className="text-destructive">মুছুন</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button onClick={() => setPool([...pool, { name: "", provider: "google", key: "", active: true }])}
+        className="mt-3 rounded-lg border border-primary px-4 py-2 text-sm text-primary">+ নতুন কী যোগ করুন</button>
+    </section>
+  );
+}
+
+type HC = { name: string; ok: boolean; ms: number; detail: string };
+
+function HealthCheck() {
+  const [res, setRes] = useState<{ checks: HC[]; at: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    supabase.from("health_checks").select("results").order("id", { ascending: false }).limit(1).maybeSingle()
+      .then(({ data }) => data && setRes(data.results as unknown as { checks: HC[]; at: string }));
+  }, []);
+  const run = async () => {
+    setBusy(true); setErr("");
+    const { data } = await supabase.auth.getSession();
+    const r = await fetch("/api/health", { method: "POST", headers: { Authorization: `Bearer ${data.session?.access_token}` } });
+    if (r.ok) setRes(await r.json()); else setErr(await r.text());
+    setBusy(false);
+  };
+  return (
+    <section className="mt-6 rounded-2xl border border-border bg-card/80 p-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-xl text-primary">৯. সিস্টেম স্বাস্থ্য পরীক্ষা</h2>
+        <button onClick={run} disabled={busy} className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">
+          {busy ? "পরীক্ষা চলছে…" : "এখন পরীক্ষা করুন"}
+        </button>
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {res ? `সর্বশেষ পরীক্ষা: ${new Date(res.at).toLocaleString("bn-BD")}` : "এখনো কোনো পরীক্ষা হয়নি।"}
+      </p>
+      {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
+      <ul className="mt-3 space-y-2">
+        {res?.checks.map((c) => (
+          <li key={c.name} className="flex items-start justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
+            <span>
+              <span className={c.ok ? "text-primary" : "text-destructive"}>{c.ok ? "● সচল" : "● সমস্যা"}</span>{" "}
+              <b>{c.name}</b> — {c.detail}
+            </span>
+            <span className="shrink-0 text-muted-foreground">{c.ms} ms</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

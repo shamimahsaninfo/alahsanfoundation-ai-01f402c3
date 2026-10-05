@@ -82,12 +82,21 @@ export const Route = createFileRoute("/api/health")({
         }));
 
         checks.push(await timed("চ্যাট পরিষেবা ও লাইভ রেসপন্স", async () => {
-          type Cand = { label: string; url: string; key: string; model: string };
+          type Cand = { label: string; url: string; key: string; model: string; isOpenAI?: boolean };
           const cands: Cand[] = [];
           const gk = keys?.google_key?.trim() || process.env["GOOGLE_API_KEY"];
           if (gk) {
+            // ১. Google OpenAI-compatible endpoint (সর্বাধিক নির্ভরযোগ্য)
             cands.push({
-              label: "Google (gemini-1.5-flash)",
+              label: "Google OpenAI (gemini-1.5-flash)",
+              url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+              key: gk,
+              model: "gemini-1.5-flash",
+              isOpenAI: true,
+            });
+            // ২. Google Direct Gemini endpoint
+            cands.push({
+              label: "Google Gemini Direct",
               url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(gk)}`,
               key: gk,
               model: "gemini-1.5-flash",
@@ -96,26 +105,41 @@ export const Route = createFileRoute("/api/health")({
           const pool = Array.isArray(keys?.key_pool) ? (keys!.key_pool as any[]) : [];
           for (const p of pool) {
             const key = String(p?.key ?? p?.api_key ?? "").trim();
-            const base = String(p?.base_url ?? p?.baseUrl ?? "").trim().replace(/\/$/, "");
+            let base = String(p?.base_url ?? p?.baseUrl ?? "").trim().replace(/\/+$/, "");
             if (!key || p?.active === false) continue;
-            const url = base ? `${base}/chat/completions` : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(key)}`;
-            cands.push({ label: String(p?.name ?? p?.provider ?? "কী-পুল"), url, key, model: String(p?.model || "gemini-1.5-flash") });
+            const pName = String(p?.name ?? p?.provider ?? "").toLowerCase();
+            let defaultModel = "gemini-1.5-flash";
+            if (pName.includes("groq") || base.includes("groq")) {
+              defaultModel = "llama-3.3-70b-versatile";
+            } else if (pName.includes("openrouter") || base.includes("openrouter")) {
+              defaultModel = "google/gemini-2.0-flash-001";
+            }
+            const model = String(p?.model || defaultModel).trim() || defaultModel;
+            let url = "";
+            let isOpenAI = true;
+            if (base) {
+              url = base.endsWith("/chat/completions") ? base : `${base}/chat/completions`;
+            } else {
+              url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(key)}`;
+              isOpenAI = false;
+            }
+            cands.push({ label: String(p?.name ?? p?.provider ?? "কী-পুল"), url, key, model, isOpenAI });
           }
           if (!cands.length) throw new Error("কোনো সক্রিয় চ্যাট কী নেই");
           const errs: string[] = [];
           for (const c of cands) {
             let r: Response;
-            if (c.url.includes("generativelanguage.googleapis.com/v1beta/models/")) {
-              r = await fetch(c.url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] }),
-              }).catch((e) => new Response(String(e), { status: 502 }));
-            } else {
+            if (c.isOpenAI) {
               r = await fetch(c.url, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${c.key}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ model: c.model, max_tokens: 5, messages: [{ role: "user", content: "ping" }] }),
+              }).catch((e) => new Response(String(e), { status: 502 }));
+            } else {
+              r = await fetch(c.url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] }),
               }).catch((e) => new Response(String(e), { status: 502 }));
             }
             if (r.ok) return `এআই দ্রুত উত্তর দিচ্ছে — ${c.label}${errs.length ? ` (বিকল্প কী ব্যবহৃত)` : ""}`;

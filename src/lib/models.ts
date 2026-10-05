@@ -11,10 +11,12 @@ export const LOVABLE_MODELS = [
 ];
 
 export const GOOGLE_MODELS = [
-  { id: "gemini-3.8-flash", label: "Gemini 3.8 Flash (সর্বশেষ, দ্রুত ও শক্তিশালী)" },
-  { id: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash Lite (সাশ্রয়ী)" },
+  { id: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash Lite (দ্রুত ও সাশ্রয়ী)" },
+  { id: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash Lite" },
   { id: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
-  { id: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro (পেইড কি লাগে)" },
+  { id: "gemini-flash-latest", label: "Gemini Flash (সর্বশেষ)" },
+  { id: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro (সবচেয়ে শক্তিশালী)" },
+  { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
 ];
 
 export const OPENAI_MODELS = [
@@ -25,7 +27,7 @@ export const OPENAI_MODELS = [
 
 export const DEFAULT_MODELS: Record<Provider, string> = {
   lovable: "openai/gpt-6-astra",
-  google: "gemini-3.8-flash",
+  google: "gemini-3.1-flash-lite",
   openai: "gpt-5.5",
 };
 

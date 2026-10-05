@@ -98,7 +98,7 @@ export const Route = createFileRoute("/api/chat")({
 
         const provider = (s?.provider ?? "lovable") as Provider;
         const stored = (s?.model || "").trim();
-        const retired = /^gemini-1\.|^gemini-2\.|^gpt-3|^o1-|^gemini-pro$|^gemini-flash-latest$/i.test(stored);
+        const retired = /^gemini-1\.|^gemini-2\.0|^gpt-3|^o1-|^gemini-pro$/i.test(stored);
         const model = !stored || retired ? DEFAULT_MODELS[provider] : stored;
 
         // API keys live only in secure server secrets, never in the database

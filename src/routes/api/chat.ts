@@ -21,13 +21,6 @@ const PERSONA = `## তোমার ব্যক্তিত্ব ও কঠো
 - ব্যবহারকারী লিংক দিলে নিচে "ওয়েব পেজের লেখা" অংশে বিষয়বস্তু থাকবে — সেটি পড়ে উত্তর দেবে।
 - ওয়েবসাইট চাইলে সম্পূর্ণ একক HTML ফাইল (\`\`\`html ব্লকে) দেবে; সিস্টেম নিজেই সেটি হোস্ট করে উত্তরের শেষে লাইভ লিংক যোগ করবে। তাই তুমি নিজে কোনো লিংক লিখবে না, এবং কখনো বলবে না "লাইভ লিংক পাওয়া যায়নি" বা "ফাইল সেভ করে ব্রাউজারে খুলুন"। কোডের পরে শুধু এক লাইনে বলবে: "নিচে লাইভ লিংক দেওয়া হলো।" ব্যাকএন্ড প্রয়োজন হলে ব্রাউজারের localStorage দিয়ে ডেটা রাখার ব্যবস্থা করবে যাতে সাইট সঙ্গে সঙ্গে চলে।
 
-## গভীর চিন্তার পদ্ধতি (সর্বোচ্চ বুদ্ধিমত্তা)
-- উত্তরের আগে মনে মনে: (১) ব্যবহারকারী আসলে কী চান ও কেন — তা বোঝো; (২) প্রয়োজনীয় তথ্য ও সীমাবদ্ধতা চিহ্নিত করো; (৩) অন্তত দুটি পথ ভেবে সেরাটি বেছে নাও; (৪) উত্তর লেখার পর নিজেই ভুল খোঁজো (গণনা, যুক্তি, কোডের বাগ, সূত্র) এবং ঠিক করো। এই চিন্তার ধাপ লিখে দেখাবে না — শুধু চূড়ান্ত পরিষ্কার উত্তর দেবে।
-- ব্যবহারকারীর লক্ষ্যের দিকে খেয়াল রাখো: তাঁর প্রস্তাবে ঝুঁকি বা ভালো বিকল্প থাকলে সংক্ষেপে বলে দাও — অন্ধভাবে মেনে নেবে না, আবার অযথা তর্কও করবে না।
-- কোডে: আগে কাঠামো ভাবো, তারপর সম্পূর্ণ, পরীক্ষাযোগ্য কোড দাও; কোথায় কী বদলাতে হবে তা স্পষ্ট বলো।
-- নিজের সীমা সৎভাবে জানো: যা জানো না তা বানাবে না, কিন্তু যা পারো তা পূর্ণ আত্মবিশ্বাসে সম্পূর্ণ করবে।
-
-
 `;
 
 const BASE_PROMPT = `তুমি "আল আহসান এআই" (Al Ahsan AI) — মুহিউস সুন্নাহ ফাউন্ডেশন বাংলাদেশ কর্তৃক তৈরি একটি অত্যন্ত শক্তিশালী, জ্ঞানী ও বিনয়ী সহকারী।
@@ -159,30 +152,14 @@ export const Route = createFileRoute("/api/chat")({
           body['reasoning_effort'] = ["low", "medium", "high", "xhigh"].includes(eff) ? eff : "medium";
         }
 
-        // Key pool: primary key first, then every active pool key of the same provider,
-        // then active "custom" (OpenAI-compatible) keys, then the built-in gateway.
-        type PoolKey = { name?: string; provider?: string; key?: string; base_url?: string; model?: string; active?: boolean };
-        const pool = (Array.isArray((keys as { key_pool?: unknown })?.key_pool) ? (keys as { key_pool: PoolKey[] }).key_pool : [])
-          .filter((p) => p && p.active !== false && p.key?.trim());
-        const attempts: { url: string; key: string; model: string; label: string }[] = [{ url, key, model, label: "primary" }];
-        for (const p of pool) {
-          if (p.provider === provider && p.key!.trim() !== key) attempts.push({ url, key: p.key!.trim(), model, label: p.name || provider });
-        }
-        for (const p of pool) {
-          if (p.provider === "custom" && p.base_url?.startsWith("https://"))
-            attempts.push({ url: p.base_url.replace(/\/$/, "") + "/chat/completions", key: p.key!.trim(), model: p.model?.trim() || model, label: p.name || "custom" });
-        }
-        let res: Response = new Response("no attempt", { status: 500 });
-        for (const a of attempts) {
-          res = await fetch(a.url, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${a.key}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ ...body, model: a.model }),
-          }).catch((e) => new Response(String(e), { status: 502 }));
-          if (res.ok && res.body) break;
-          console.error(`Key "${a.label}" failed [${res.status}]: ${(await res.text()).slice(0, 300)}`);
-        }
+        let res = await fetch(url, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        // If the admin's own Google/OpenAI key fails (e.g. Pro model not allowed on a free key), fall back to the built-in gateway with the same model.
         if ((!res.ok || !res.body) && provider !== "lovable" && process.env["LOVABLE_API_KEY"]) {
+          console.error(`Direct ${provider} request failed [${res.status}]: ${await res.text()}`);
           const gwModel = `${provider}/${model}`.replace(/^google\/gemini-(1|2)\.\d.*$/, "google/gemini-3.1-pro-preview");
           res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",

@@ -18,21 +18,18 @@ export type Database = {
         Row: {
           google_key: string
           id: number
-          key_pool: Json
           openai_key: string
           updated_at: string
         }
         Insert: {
           google_key?: string
           id?: number
-          key_pool?: Json
           openai_key?: string
           updated_at?: string
         }
         Update: {
           google_key?: string
           id?: number
-          key_pool?: Json
           openai_key?: string
           updated_at?: string
         }
@@ -131,24 +128,6 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      health_checks: {
-        Row: {
-          created_at: string
-          id: number
-          results: Json
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          results: Json
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          results?: Json
         }
         Relationships: []
       }

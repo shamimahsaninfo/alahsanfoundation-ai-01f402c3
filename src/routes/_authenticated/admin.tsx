@@ -296,55 +296,123 @@ type HC = { name: string; ok: boolean; ms: number; detail: string };
 function HealthCheck() {
   const [res, setRes] = useState<{ checks: HC[]; at: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [fixing, setFixing] = useState(false);
+  const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+
   useEffect(() => {
     supabase.from("health_checks").select("results").order("id", { ascending: false }).limit(1).maybeSingle()
       .then(({ data }) => data && setRes(data.results as unknown as { checks: HC[]; at: string }));
   }, []);
+
   const run = async () => {
-    setBusy(true); setErr("");
-    const { data } = await supabase.auth.getSession();
-    const r = await fetch("/api/health", { method: "POST", headers: { Authorization: `Bearer ${data.session?.access_token}` } });
-    if (r.ok) setRes(await r.json()); else setErr(await r.text());
-    setBusy(false);
+    setBusy(true); setErr(""); setMsg("");
+    try {
+      const { data } = await supabase.auth.getSession();
+      const r = await fetch("/api/health", { method: "POST", headers: { Authorization: `Bearer ${data.session?.access_token}` } });
+      if (r.ok) setRes(await r.json()); else setErr(await r.text());
+    } catch (e: any) {
+      setErr(e?.message || "পরীক্ষা চালানো যায়নি");
+    } finally {
+      setBusy(false);
+    }
   };
+
+  const handleAutoFix = async () => {
+    setFixing(true); setErr(""); setMsg("");
+    try {
+      const { data: s } = await supabase.auth.getSession();
+      const r = await fetch("/api/health", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.session?.access_token}` },
+        body: JSON.stringify({ action: "auto_fix" }),
+      });
+      const data = await r.json().catch(() => ({}));
+      setMsg(data?.message || "স্বয়ংক্রিয় সমাধান প্রয়োগ করা হয়েছে। পুনরায় যাচাই করা হচ্ছে...");
+      await run();
+    } catch (e: any) {
+      setErr(e?.message || "সমাধান ব্যর্থ হয়েছে");
+    } finally {
+      setFixing(false);
+    }
+  };
+
+  const hasErrors = res?.checks.some(c => !c.ok);
+
   return (
-    <section className="mt-6 rounded-2xl border border-border bg-card/80 p-6">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="font-display text-xl text-primary">৯. সিস্টেম স্বাস্থ্য পরীক্ষা</h2>
-        <button onClick={run} disabled={busy} className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">
-          {busy ? "পরীক্ষা চলছে…" : "এখন পরীক্ষা করুন"}
-        </button>
+    <section className="mt-6 rounded-2xl border border-primary/20 bg-card/90 p-6 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl text-primary font-semibold flex items-center gap-2">
+            <span>🩺</span> ৯. মেগা ডায়াগনস্টিক ও অটো-রিপেয়ার সেন্টার
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {res ? `সর্বশেষ সিস্টেম স্ক্যান: ${new Date(res.at).toLocaleString("bn-BD")}` : "ওয়েবসাইটের স্বাস্থ্য ও এআই স্ট্যাটাস স্ক্যান করুন।"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {hasErrors && (
+            <button
+              onClick={handleAutoFix}
+              disabled={fixing || busy}
+              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-2 text-xs font-semibold text-white shadow-sm disabled:opacity-60 transition"
+            >
+              {fixing ? "মেরামত হচ্ছে…" : "⚡ সব সমস্যা একসাথে সমাধান করুন"}
+            </button>
+          )}
+          <button
+            onClick={run}
+            disabled={busy || fixing}
+            className="rounded-lg bg-primary hover:bg-primary/90 px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60 transition"
+          >
+            {busy ? "পুরো সাইট স্ক্যান চলছে…" : "🔍 এখন পরীক্ষা করুন"}
+          </button>
+        </div>
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {res ? `সর্বশেষ পরীক্ষা: ${new Date(res.at).toLocaleString("bn-BD")}` : "এখনো কোনো পরীক্ষা হয়নি।"}
-      </p>
-      {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
-      <ul className="mt-3 space-y-2">
+
+      {msg && (
+        <div className="mt-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-600 font-medium">
+          ✓ {msg}
+        </div>
+      )}
+      {err && (
+        <div className="mt-3 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
+          ✕ {err}
+        </div>
+      )}
+
+      <ul className="mt-4 space-y-2.5">
         {res?.checks.map((c) => (
-          <li key={c.name} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
-            <span>
-              <span className={c.ok ? "text-primary" : "text-destructive"}>{c.ok ? "● সচল" : "● সমস্যা"}</span>{" "}
-              <b>{c.name}</b> — {c.detail}
-            </span>
-            <div className="flex items-center gap-2 shrink-0">
+          <li
+            key={c.name}
+            className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm transition ${
+              c.ok ? "border-border/60 bg-background/50" : "border-destructive/30 bg-destructive/5"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
+                c.ok ? "bg-emerald-500/15 text-emerald-600" : "bg-destructive/15 text-destructive"
+              }`}>
+                {c.ok ? "✓" : "!"}
+              </span>
+              <div>
+                <span className="font-semibold text-foreground">{c.name}</span>
+                <p className="text-xs text-muted-foreground mt-0.5">{c.detail}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5 shrink-0 ml-auto">
               {!c.ok && (
                 <button
-                  onClick={async () => {
-                    const { data: s } = await supabase.auth.getSession();
-                    await fetch("/api/health", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.session?.access_token}` },
-                      body: JSON.stringify({ action: "auto_fix" }),
-                    });
-                    run();
-                  }}
-                  className="rounded bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/20"
+                  onClick={handleAutoFix}
+                  disabled={fixing}
+                  className="rounded-md bg-destructive/10 hover:bg-destructive/20 px-2.5 py-1 text-xs font-semibold text-destructive transition"
                 >
-                  সমাধান করুন
+                  {fixing ? "ঠিক হচ্ছে…" : "সমাধান করুন"}
                 </button>
               )}
-              <span className="text-muted-foreground">{c.ms} ms</span>
+              <span className="text-xs font-mono text-muted-foreground bg-muted/40 px-2 py-0.5 rounded">
+                {c.ms} ms
+              </span>
             </div>
           </li>
         ))}

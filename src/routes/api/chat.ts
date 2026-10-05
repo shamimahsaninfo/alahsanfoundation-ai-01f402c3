@@ -128,7 +128,7 @@ export const Route = createFileRoute("/api/chat")({
 
         const provider = (s?.provider ?? "lovable") as Provider;
         const stored = (s?.model || "").trim();
-        const retired = /^gpt-3|^gemini-pro$|^gemini-flash-latest$|^gemini-3|^gemini-1\.5/i.test(stored);
+        const retired = /^gpt-3|^gemini-pro$|^gemini-flash-latest$|^gemini-3/i.test(stored);
         const model = !stored || retired ? DEFAULT_MODELS[provider] : stored;
 
         // API keys live only in secure server secrets, never in the database
@@ -210,14 +210,6 @@ export const Route = createFileRoute("/api/chat")({
             headers: { Authorization: `Bearer ${a.key}`, "Content-Type": "application/json" },
             body: JSON.stringify({ ...body, model: a.model }),
           }).catch((e) => new Response(String(e), { status: 502 }));
-          // যদি ৪০৪ আসে এবং মডেল gemini-1.5 হয়, তবে সরাসরি gemini-2.0-flash দিয়ে চেষ্টা করো
-          if (res.status === 404 && a.model.includes("1.5")) {
-            res = await fetch(a.url, {
-              method: "POST",
-              headers: { Authorization: `Bearer ${a.key}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ ...body, model: "gemini-2.0-flash" }),
-            }).catch((e) => new Response(String(e), { status: 502 }));
-          }
           if (res.ok && res.body) break;
           console.error(`Key "${a.label}" failed [${res.status}]: ${(await res.text()).slice(0, 300)}`);
         }

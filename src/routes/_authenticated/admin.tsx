@@ -322,12 +322,30 @@ function HealthCheck() {
       {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
       <ul className="mt-3 space-y-2">
         {res?.checks.map((c) => (
-          <li key={c.name} className="flex items-start justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
+          <li key={c.name} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
             <span>
               <span className={c.ok ? "text-primary" : "text-destructive"}>{c.ok ? "● সচল" : "● সমস্যা"}</span>{" "}
               <b>{c.name}</b> — {c.detail}
             </span>
-            <span className="shrink-0 text-muted-foreground">{c.ms} ms</span>
+            <div className="flex items-center gap-2 shrink-0">
+              {!c.ok && (
+                <button
+                  onClick={async () => {
+                    const { data: s } = await supabase.auth.getSession();
+                    await fetch("/api/health", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.session?.access_token}` },
+                      body: JSON.stringify({ action: "auto_fix" }),
+                    });
+                    run();
+                  }}
+                  className="rounded bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/20"
+                >
+                  সমাধান করুন
+                </button>
+              )}
+              <span className="text-muted-foreground">{c.ms} ms</span>
+            </div>
           </li>
         ))}
       </ul>

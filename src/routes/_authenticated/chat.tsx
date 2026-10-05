@@ -47,7 +47,15 @@ function HtmlPreview({ code, streaming }: { code: string; streaming?: boolean })
   if (streaming) {
     return (
       <div className="not-prose my-3 overflow-hidden rounded-xl border border-border bg-card">
-        <div className="flex items-center gap-2 border-b border-border px-3 py-2 text-xs text-primary"><span className="typing"><i /><i /><i /></span> ওয়েবসাইট তৈরি হচ্ছে… ({code.length} অক্ষর)</div>
+        <div className="flex items-center gap-2 border-b border-border px-3 py-2 text-xs text-primary"><div className="flex items-center gap-2.5 py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-blue-500/10 border border-emerald-500/20 shadow-sm animate-pulse my-2 w-fit">
+                        <div className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                        </div>
+                        <span className="text-xs sm:text-sm font-semibold tracking-wide bg-gradient-to-r from-emerald-600 via-teal-500 to-indigo-600 dark:from-emerald-400 dark:via-teal-300 dark:to-blue-400 bg-clip-text text-transparent">
+                          গবেষণা ও উত্তর প্রস্তুত হচ্ছে...
+                        </span>
+                      </div> ওয়েবসাইট তৈরি হচ্ছে… ({code.length} অক্ষর)</div>
         <pre className="h-[200px] overflow-hidden p-3 text-xs text-muted-foreground"><code>{code.slice(-1500)}</code></pre>
       </div>
     );
@@ -444,7 +452,15 @@ function ChatPage() {
                           </div>
                         </>
                       ) : (
-                        <span className="typing"><i /><i /><i /></span>
+                        <div className="flex items-center gap-2.5 py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-blue-500/10 border border-emerald-500/20 shadow-sm animate-pulse my-2 w-fit">
+                        <div className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                        </div>
+                        <span className="text-xs sm:text-sm font-semibold tracking-wide bg-gradient-to-r from-emerald-600 via-teal-500 to-indigo-600 dark:from-emerald-400 dark:via-teal-300 dark:to-blue-400 bg-clip-text text-transparent">
+                          গবেষণা ও উত্তর প্রস্তুত হচ্ছে...
+                        </span>
+                      </div>
                       )}
                     </>
                   )}

@@ -220,6 +220,7 @@ function ChatPage() {
     }
     const history: Msg[] = [...msgs, { role: "user", content: text }];
     setMsgs([...history, { role: "assistant", content: "" }]);
+    setPost(null);
     setLoading(true);
     await supabase.from("messages").insert({ conversation_id: convId, role: "user", content: text, user_id: user.id });
 
@@ -301,6 +302,8 @@ function ChatPage() {
         }).catch(() => {}),
       );
     }
+    setPost(5);
+    setTimeout(() => setPost(null), 1800);
     loadConvs();
   };
 

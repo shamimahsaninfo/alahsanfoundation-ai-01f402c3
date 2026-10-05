@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Mic, MicOff, Send, Plus, Trash2, Volume2, VolumeX, LogOut, Shield, Menu, Square, Copy, Check, Search, Printer, Download, Maximize2, Code2, MonitorPlay, ExternalLink } from "lucide-react";
+import { Mic, MicOff, Send, Plus, Trash2, Volume2, VolumeX, LogOut, Shield, Menu, Square, Copy, Check, Search, Printer, Download, Maximize2, Code2, MonitorPlay, ExternalLink, ImagePlus } from "lucide-react";
 
 const STEPS = ["বোঝা", "পরিকল্পনা", "নির্মাণ", "যাচাই", "সংশোধন", "প্রিভিউ"];
 function WorkflowStepper({ stage }: { stage: number }) {
@@ -457,7 +457,7 @@ function ChatPage() {
             {loading ? (
               <button onClick={() => abortRef.current?.abort()} className="rounded-xl bg-secondary p-3" aria-label="থামান"><Square size={20} /></button>
             ) : (
-              <button onClick={send} disabled={!input.trim()} className="rounded-xl bg-primary p-3 text-primary-foreground disabled:opacity-40" aria-label="পাঠান"><Send size={20} /></button>
+              <button onClick={send} disabled={!input.trim() && !image} className="rounded-xl bg-primary p-3 text-primary-foreground disabled:opacity-40" aria-label="পাঠান"><Send size={20} /></button>
             )}
           </div>
         </div>

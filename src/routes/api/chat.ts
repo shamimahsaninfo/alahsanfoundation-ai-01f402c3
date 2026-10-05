@@ -128,7 +128,7 @@ export const Route = createFileRoute("/api/chat")({
 
         const provider = (s?.provider ?? "lovable") as Provider;
         const stored = (s?.model || "").trim();
-        const retired = /^gpt-3|^gemini-pro$|^gemini-flash-latest$|^gemini-3/i.test(stored);
+        const retired = /^gemini-1\.|^gemini-2\.|^gpt-3|^o1-|^gemini-pro$|^gemini-flash-latest$/i.test(stored);
         const model = !stored || retired ? DEFAULT_MODELS[provider] : stored;
 
         // API keys live only in secure server secrets, never in the database
@@ -201,7 +201,7 @@ export const Route = createFileRoute("/api/chat")({
         }
         for (const p of pool) {
           if (p.provider === "custom" && p.base_url?.startsWith("https://"))
-            attempts.push({ url: (p.base_url.trim().replace(/\/+$/, "").endsWith("/chat/completions") ? p.base_url.trim().replace(/\/+$/, "") : p.base_url.trim().replace(/\/+$/, "") + "/chat/completions"), key: p.key!.trim(), model: p.model?.trim() || model, label: p.name || "custom" });
+            attempts.push({ url: p.base_url.replace(/\/$/, "") + "/chat/completions", key: p.key!.trim(), model: p.model?.trim() || model, label: p.name || "custom" });
         }
         let res: Response = new Response("no attempt", { status: 500 });
         for (const a of attempts) {

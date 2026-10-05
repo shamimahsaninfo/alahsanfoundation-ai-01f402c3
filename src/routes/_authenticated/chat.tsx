@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Mic, MicOff, Send, Plus, Trash2, Volume2, VolumeX, LogOut, Shield, Menu, Square, Copy, Check, Search, Printer, Download, Maximize2, Code2, MonitorPlay, ExternalLink, ImagePlus, Sparkles, Loader2, Radio } from "lucide-react";
+import { Mic, MicOff, Send, Plus, Trash2, Volume2, VolumeX, LogOut, Shield, Menu, Square, Copy, Check, Search, Printer, Download, Maximize2, Code2, MonitorPlay, ExternalLink, ImagePlus } from "lucide-react";
 
 const STEPS = ["বোঝা", "পরিকল্পনা", "নির্মাণ", "যাচাই", "সংশোধন", "প্রিভিউ"];
 function WorkflowStepper({ stage }: { stage: number }) {
@@ -41,72 +41,13 @@ export const Route = createFileRoute("/_authenticated/chat")({
 type Msg = { role: "user" | "assistant"; content: string; image?: string };
 type Conv = { id: string; title: string };
 
-
-const THINKING_STEPS = [
-  "ব্যবহারকারীর জিজ্ঞাসা ও প্রেক্ষাপট পর্যালোচনা করা হচ্ছে...",
-  "জ্ঞানের ভাণ্ডার ও প্রামাণ্য তথ্য অনুসন্ধান চলছে...",
-  "গভীর ভাবনাত্মক যুক্তি ও উত্তর কাঠামো তৈরি হচ্ছে...",
-  "উত্তরের নির্ভুলতা ও প্রাঞ্জলতা যাচাই করা হচ্ছে...",
-  "চূড়ান্ত উত্তর গুছিয়ে উপস্থাপন করা হচ্ছে...",
-];
-
-function GlowingThinkingCard({ elapsed }: { elapsed: number }) {
-  const stepIdx = Math.min(Math.floor(elapsed / 2.5), THINKING_STEPS.length - 1);
-  const activeStep = THINKING_STEPS[stepIdx];
-
-  return (
-    <div className="not-prose my-3 overflow-hidden rounded-2xl border border-emerald-500/40 bg-gradient-to-r from-emerald-500/10 via-teal-500/15 to-indigo-500/10 p-4 shadow-md backdrop-blur-sm relative">
-      <div className="relative z-10 flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
-            </div>
-            <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm bg-gradient-to-r from-emerald-600 via-teal-500 to-indigo-600 dark:from-emerald-400 dark:via-teal-300 dark:to-indigo-300 bg-clip-text text-transparent">
-              <Sparkles size={16} className="text-emerald-500 animate-spin [animation-duration:6s]" />
-              <span>লাইভ প্রসেসিং চলছে</span>
-            </div>
-          </div>
-          <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-            {elapsed} সে.
-          </span>
-        </div>
-
-        <div className="rounded-xl border border-emerald-500/20 bg-background/70 px-3.5 py-2.5 shadow-inner">
-          <p className="text-xs sm:text-sm font-medium text-foreground/90 flex items-center gap-2">
-            <Loader2 size={14} className="animate-spin text-teal-500 shrink-0" />
-            <span className="truncate">{activeStep}</span>
-          </p>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          {THINKING_STEPS.map((s, idx) => (
-            <div
-              key={s}
-              className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                idx < stepIdx
-                  ? "bg-emerald-500"
-                  : idx === stepIdx
-                  ? "bg-gradient-to-r from-emerald-400 to-teal-400 animate-pulse shadow-sm shadow-emerald-500/50"
-                  : "bg-muted/60"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function HtmlPreview({ code, streaming }: { code: string; streaming?: boolean }) {
   const [tab, setTab] = useState<"run" | "code">("run");
   const [ok, setOk] = useState(false);
   if (streaming) {
     return (
       <div className="not-prose my-3 overflow-hidden rounded-xl border border-border bg-card">
-        <div className="flex items-center gap-2 border-b border-border px-3 py-2 text-xs text-primary"><GlowingThinkingCard elapsed={elapsed} /> ওয়েবসাইট তৈরি হচ্ছে… ({code.length} অক্ষর)</div>
+        <div className="flex items-center gap-2 border-b border-border px-3 py-2 text-xs text-primary"><span className="typing"><i /><i /><i /></span> ওয়েবসাইট তৈরি হচ্ছে… ({code.length} অক্ষর)</div>
         <pre className="h-[200px] overflow-hidden p-3 text-xs text-muted-foreground"><code>{code.slice(-1500)}</code></pre>
       </div>
     );
@@ -243,18 +184,6 @@ function ChatPage() {
   const [sidebar, setSidebar] = useState(false);
   const [cfg, setCfg] = useState<{ welcome_title?: string; welcome_subtitle?: string; suggestions?: string }>({});
   const [speaking, setSpeaking] = useState<number | null>(null);
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    let t: any;
-    if (loading) {
-      setElapsed(0);
-      t = setInterval(() => setElapsed((s) => s + 1), 1000);
-    } else {
-      setElapsed(0);
-    }
-    return () => clearInterval(t);
-  }, [loading]);
   useEffect(() => { fetch("/api/settings").then((r) => r.json()).then(setCfg).catch(() => {}); }, []);
   const recRef = useRef<any>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -290,85 +219,28 @@ function ChatPage() {
     loadConvs();
   };
 
-  const toggleMic = async () => {
+  const toggleMic = () => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) {
-      alert("আপনার ডিভাইসের ব্রাউজারে স্পিচ রিকগনিশন সক্রিয় নেই। দয়া করে Android Chrome বা কিবোর্ডের নিজস্ব মাইক আইকন ব্যবহার করুন।");
-      return;
-    }
-
-    if (listening) {
-      try {
-        recRef.current?.stop();
-      } catch {}
+    if (!SR) return alert("এই ব্রাউজারে ভয়েস টাইপিং নেই। Android-এ Chrome, iPhone-এ Safari ব্যবহার করুন, অথবা কিবোর্ডের মাইক বোতাম চাপুন।");
+    if (listening) return recRef.current?.stop();
+    const rec = new SR();
+    rec.lang = "bn-BD";
+    rec.interimResults = true;
+    rec.continuous = false;
+    const base = input;
+    rec.onresult = (e: any) => {
+      let t = "";
+      for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+      setInput((base ? base + " " : "") + t);
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = (e: any) => {
       setListening(false);
-      return;
-    }
-
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach((track) => track.stop());
-      } catch (err: any) {
-        if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
-          alert("মাইক্রোফোনের অনুমতি বন্ধ আছে। দয়া করে ব্রাউজার সেটিংসে গিয়ে Microphone পারমিশন অন করুন।");
-          return;
-        }
-      }
-    }
-
-    try {
-      const rec = new SR();
-      rec.lang = "bn-BD";
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.maxAlternatives = 1;
-
-      const baseText = input.trim();
-
-      rec.onstart = () => {
-        setListening(true);
-      };
-
-      rec.onresult = (e: any) => {
-        let finalChunk = "";
-        let interimChunk = "";
-        for (let i = 0; i < e.results.length; ++i) {
-          const item = e.results[i];
-          if (item.isFinal) {
-            finalChunk += item[0].transcript;
-          } else {
-            interimChunk += item[0].transcript;
-          }
-        }
-        const spoken = (finalChunk + " " + interimChunk).trim();
-        if (spoken) {
-          setInput(baseText ? `${baseText} ${spoken}` : spoken);
-        }
-      };
-
-      rec.onerror = (e: any) => {
-        console.warn("Speech error:", e?.error);
-        if (e?.error === "not-allowed" || e?.error === "service-not-allowed") {
-          alert("মাইক্রোফোনের অনুমতি প্রয়োজন। ব্রাউজারের অ্যাড্রেস বারের তালার চিহ্নে চাপ দিয়ে Microphone পারমিশন অন করুন।");
-          setListening(false);
-        } else if (e?.error === "network") {
-          alert("ভয়েস সার্ভারে নেটওয়ার্ক সমস্যা হয়েছে। কিবোর্ডের নিজস্ব মাইক বোতাম দিয়েও কথা বলতে পারেন।");
-          setListening(false);
-        }
-      };
-
-      rec.onend = () => {
-        setListening(false);
-      };
-
-      recRef.current = rec;
-      rec.start();
-      setListening(true);
-    } catch (err: any) {
-      console.error("Mic error:", err);
-      setListening(false);
-    }
+      if (e?.error === "not-allowed" || e?.error === "service-not-allowed") alert("মাইক্রোফোনের অনুমতি দিন: ব্রাউজারের ঠিকানার পাশে 🔒 চিহ্নে চাপ দিয়ে Microphone চালু করুন।");
+      else if (e?.error === "no-speech") alert("কোনো কথা শোনা যায়নি, আবার চেষ্টা করুন।");
+    };
+    recRef.current = rec;
+    try { rec.start(); setListening(true); } catch { setListening(false); }
   };
 
   const send = async () => {
@@ -572,7 +444,7 @@ function ChatPage() {
                           </div>
                         </>
                       ) : (
-                        <GlowingThinkingCard elapsed={elapsed} />
+                        <span className="typing"><i /><i /><i /></span>
                       )}
                     </>
                   )}
@@ -584,17 +456,6 @@ function ChatPage() {
         </div>
 
         <div className="border-t border-border/60 p-4">
-          {listening && (
-            <div className="mx-auto max-w-3xl mb-2 flex items-center justify-between gap-2 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-2 text-xs sm:text-sm text-destructive animate-pulse shadow-sm">
-              <div className="flex items-center gap-2 font-medium">
-                <Radio size={16} className="animate-spin [animation-duration:3s]" />
-                <span>ভয়েস শুনছি... মুখে কথা বলুন (বাংলা বা ইংরেজি)</span>
-              </div>
-              <button onClick={() => recRef.current?.stop()} className="rounded-lg bg-destructive px-2.5 py-1 text-xs text-destructive-foreground font-semibold hover:opacity-90">
-                শেষ করুন
-              </button>
-            </div>
-          )}
           <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-border bg-card p-2 focus-within:border-primary/60">
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) pickImage(f); e.target.value = ""; }} />
             <button onClick={() => fileRef.current?.click()} className="rounded-xl p-3 text-primary hover:bg-primary/10" aria-label="ছবি যুক্ত করুন" title="ছবি যুক্ত করুন"><ImagePlus size={20} /></button>

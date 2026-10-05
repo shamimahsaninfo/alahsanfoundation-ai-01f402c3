@@ -201,7 +201,7 @@ export const Route = createFileRoute("/api/chat")({
         }
         for (const p of pool) {
           if (p.provider === "custom" && p.base_url?.startsWith("https://"))
-            attempts.push({ url: p.base_url.replace(/\/$/, "") + "/chat/completions", key: p.key!.trim(), model: p.model?.trim() || model, label: p.name || "custom" });
+            attempts.push({ url: (p.base_url.trim().replace(/\/+$/, "").endsWith("/chat/completions") ? p.base_url.trim().replace(/\/+$/, "") : p.base_url.trim().replace(/\/+$/, "") + "/chat/completions"), key: p.key!.trim(), model: p.model?.trim() || model, label: p.name || "custom" });
         }
         let res: Response = new Response("no attempt", { status: 500 });
         for (const a of attempts) {

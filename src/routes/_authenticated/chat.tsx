@@ -208,9 +208,11 @@ function ChatPage() {
   };
 
   const send = async () => {
-    const text = input.trim();
+    const img = image;
+    const text = input.trim() || (img ? "এই ছবিটি বিশ্লেষণ করুন।" : "");
     if (!text || loading) return;
     setInput("");
+    setImage(null);
     let convId = active;
     if (!convId) {
       const { data, error } = await supabase.from("conversations").insert({ title: text.slice(0, 60), user_id: user.id }).select("id").single();
@@ -218,11 +220,11 @@ function ChatPage() {
       convId = data.id;
       setActive(convId);
     }
-    const history: Msg[] = [...msgs, { role: "user", content: text }];
+    const history: Msg[] = [...msgs, { role: "user", content: text, ...(img ? { image: img } : {}) }];
     setMsgs([...history, { role: "assistant", content: "" }]);
     setPost(null);
     setLoading(true);
-    await supabase.from("messages").insert({ conversation_id: convId, role: "user", content: text, user_id: user.id });
+    await supabase.from("messages").insert({ conversation_id: convId, role: "user", content: img ? `[ছবি সংযুক্ত] ${text}` : text, user_id: user.id });
 
     let full = "";
     try {

@@ -2,7 +2,24 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Mic, MicOff, Send, Plus, Trash2, Volume2, VolumeX, LogOut, Shield, Menu, Square, Copy, Check, Search, Printer, Download, Maximize2, Code2, MonitorPlay } from "lucide-react";
+import { Mic, MicOff, Send, Plus, Trash2, Volume2, VolumeX, LogOut, Shield, Menu, Square, Copy, Check, Search, Printer, Download, Maximize2, Code2, MonitorPlay, ExternalLink } from "lucide-react";
+
+const STEPS = ["বোঝা", "পরিকল্পনা", "নির্মাণ", "যাচাই", "সংশোধন", "প্রিভিউ"];
+function WorkflowStepper({ stage }: { stage: number }) {
+  return (
+    <div className="not-prose mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] tracking-wide">
+      {STEPS.map((s, i) => (
+        <span key={s} className="flex items-center gap-2">
+          <span className={`flex items-center gap-1.5 ${i < stage ? "text-primary" : i === stage ? "text-foreground" : "text-muted-foreground/50"}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${i < stage ? "bg-primary" : i === stage ? "animate-pulse bg-primary" : "bg-muted-foreground/30"}`} />
+            {s}
+          </span>
+          {i < STEPS.length - 1 && <span className={`h-px w-4 ${i < stage ? "bg-primary/60" : "bg-border"}`} />}
+        </span>
+      ))}
+    </div>
+  );
+}
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 import { useIsAdmin } from "@/lib/admin";
@@ -63,8 +80,8 @@ function LiveLinkCard({ href }: { href: string }) {
     <span className="not-prose my-3 flex flex-col gap-2 rounded-xl border border-primary/40 bg-primary/5 p-3">
       <span className="break-all text-xs text-muted-foreground">{href}</span>
       <span className="flex flex-wrap gap-2">
-        <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground no-underline">🌐 নতুন ট্যাবে ওয়েবসাইট খুলুন</a>
-        <button onClick={async () => { await navigator.clipboard.writeText(href); setOk(true); setTimeout(() => setOk(false), 1500); }} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm">{ok ? "✅ কপি হয়েছে" : "📋 লিংক কপি করুন"}</button>
+        <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground no-underline"><ExternalLink size={14} /> নতুন ট্যাবে ওয়েবসাইট খুলুন</a>
+        <button onClick={async () => { await navigator.clipboard.writeText(href); setOk(true); setTimeout(() => setOk(false), 1500); }} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm">{ok ? <Check size={14} /> : <Copy size={14} />}{ok ? "কপি হয়েছে" : "লিংক কপি করুন"}</button>
       </span>
     </span>
   );
@@ -245,7 +262,7 @@ function ChatPage() {
       buf += dec.decode();
       buf.split("\n").forEach(handle);
     } catch (e: any) {
-      if (e?.name !== "AbortError") full = full || `⚠️ ${e?.message || "ত্রুটি হয়েছে"}`;
+      if (e?.name !== "AbortError") full = full || `ত্রুটি: ${e?.message || "ত্রুটি হয়েছে"}`;
       setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]);
     }
     setLoading(false);
@@ -262,10 +279,10 @@ function ChatPage() {
           if (pr.ok) {
             const { url } = await pr.json();
             const liveUrl = `${window.location.origin}${url}`;
-            full += `\n\n---\n\n### 🌐 লাইভ লিংক তৈরি হয়েছে\n\n[${liveUrl}](${liveUrl})\n\nলিংকে চাপ দিলেই ওয়েবসাইটটি সরাসরি খুলবে।`;
+            full += `\n\n---\n\n### লাইভ লিংক তৈরি হয়েছে\n\n[${liveUrl}](${liveUrl})\n\nলিংকে চাপ দিলেই ওয়েবসাইটটি সরাসরি খুলবে।`;
             setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]);
           } else {
-            full += `\n\n⚠️ লাইভ লিংক তৈরি করা যায়নি (${pr.status})। আবার চেষ্টা করুন।`;
+            full += `\n\nলাইভ লিংক তৈরি করা যায়নি (${pr.status})। আবার চেষ্টা করুন।`;
             setMsgs((m) => [...m.slice(0, -1), { role: "assistant", content: full }]);
           }
         } catch {}

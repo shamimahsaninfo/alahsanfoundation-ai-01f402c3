@@ -78,7 +78,7 @@ const PROBES: Record<string, (c: Ctx) => Promise<void>> = {
     await Promise.all(pool.map(async (p, i) => {
       if (p?.active === false || !p?.key?.trim()) return;
       const url = p.provider === "custom" ? `${String(p.base_url ?? "").replace(/\/$/, "")}/chat/completions` : p.provider === "openai" ? "https://api.openai.com/v1/chat/completions" : GOOGLE_CHAT;
-      const model = p.model?.trim() || (p.provider === "google" ? c.settings?.model || "gemini-3.5-flash" : "gpt-4o");
+      const model = p.model?.trim() || (p.provider === "google" ? c.settings?.model || "gemini-3.8-flash" : "gpt-4o");
       const r = await chatCall(url, p.key.trim(), model, "ok");
       if (r.ok) return void c.passed.push(`অতিরিক্ত কী: ${p.name || i + 1}`);
       const temp = r.status === 429 || r.status >= 500;
@@ -125,7 +125,7 @@ async function scan(admin: any) {
 
 async function repair(admin: any, fix: string): Promise<string> {
   if (fix === "enable_chat") { await admin.from("ai_settings").update({ chat_enabled: true }).eq("id", 1); return "চ্যাট চালু করা হয়েছে"; }
-  if (fix === "create_settings") { await admin.from("ai_settings").upsert({ id: 1, provider: "google", model: "gemini-3.5-flash", chat_enabled: true }); return "সেটিংস তৈরি হয়েছে"; }
+  if (fix === "create_settings") { await admin.from("ai_settings").upsert({ id: 1, provider: "google", model: "gemini-3.8-flash", chat_enabled: true }); return "সেটিংস তৈরি হয়েছে"; }
   if (fix === "switch_model") {
     const { data: k } = await admin.from("ai_keys").select("google_key").eq("id", 1).maybeSingle();
     const key = k?.google_key?.trim() || process.env["GOOGLE_API_KEY"];

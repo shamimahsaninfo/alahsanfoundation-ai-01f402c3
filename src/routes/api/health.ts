@@ -9,7 +9,7 @@ type Ctx = { admin: any; settings: any; keys: any; issues: Issue[]; passed: stri
 
 const FOUNDER = "alahsanfoundation.info@gmail.com";
 const GOOGLE_CHAT = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-const WORKING_GOOGLE_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-3-flash-preview"];
+const WORKING_GOOGLE_MODELS = ["gemini-3.8-flash", "gemini-3-flash-preview"];
 const TINY_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 const TABLES = ["ai_settings", "ai_keys", "conversations", "messages", "pages", "health_checks", "chat_usage", "user_roles"];
 
@@ -36,7 +36,7 @@ function classify(status: number, text: string) {
 
 function chatTarget(ctx: Ctx) {
   const provider = ctx.settings?.provider ?? "google";
-  const model = ctx.settings?.model ?? "gemini-3.5-flash";
+  const model = ctx.settings?.model ?? "gemini-3.8-flash";
   if (provider === "google") return { url: GOOGLE_CHAT, key: ctx.keys?.google_key?.trim() || process.env["GOOGLE_API_KEY"], model, provider };
   if (provider === "openai") return { url: "https://api.openai.com/v1/chat/completions", key: ctx.keys?.openai_key?.trim(), model, provider };
   return { url: "https://ai.gateway.lovable.dev/v1/chat/completions", key: process.env["LOVABLE_API_KEY"], model, provider };

@@ -194,7 +194,7 @@ export const Route = createFileRoute("/api/chat")({
           if (p.provider === "custom" && p.base_url?.startsWith("https://"))
             attempts.push({ url: p.base_url.replace(/\/$/, "") + "/chat/completions", key: p.key!.trim(), model: p.model?.trim() || model, label: p.name || "custom" });
         }
-        const hasImage = (body.messages as any[]).some((m) => Array.isArray(m?.content));
+        const hasImage = (body["messages"] as any[]).some((m) => Array.isArray(m?.content));
         let res: Response = new Response("no attempt", { status: 500 });
         let realErr: { status: number; text: string } | null = null;
         for (const a of attempts) {
@@ -234,7 +234,7 @@ export const Route = createFileRoute("/api/chat")({
   },
 });
 
-function pick(a: string[]) { return a[Math.floor(Math.random() * a.length)]; }
+function pick(a: string[]): string { return a[Math.floor(Math.random() * a.length)] ?? a[0] ?? ""; }
 
 /** Maps a real provider error to a natural message. "Credit exhausted" only when the provider body explicitly says billing/credits. */
 function friendlyError(status: number, text: string): string {

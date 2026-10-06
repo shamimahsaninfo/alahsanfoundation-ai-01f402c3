@@ -94,7 +94,6 @@ export async function saveMemory(items: MemoryItem[]) {
 /** Truth gatekeeper: asks a model to extract only durable, verifiable-by-user facts. */
 export async function gatekeep(user: string, assistant: string, existing: MemoryItem[]): Promise<MemoryItem[]> {
   const key = process.env["LOVABLE_API_KEY"];
-  if (!key) return [];
   const prompt = `তুমি একটি কঠোর "সত্যতা যাচাই গেটকিপার"। নিচের কথোপকথন থেকে কেবল সেই তথ্যগুলো বের করো যা দীর্ঘমেয়াদে মনে রাখার যোগ্য এবং সত্য বলে নিশ্চিত।
 
 গ্রহণযোগ্য (kind):
@@ -119,15 +118,19 @@ ${existing.map((m) => "- " + m.text).join("\n") || "(কিছু নেই)"}
 """${assistant.slice(0, 2000)}"""
 
 শুধু JSON দাও: {"facts":[{"text":"এক বাক্যে বাংলায়","kind":"preference|project|correction"}]} — কিছু না থাকলে {"facts":[]}`;
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  // Use the admin's own Google key (free) first; Lovable gateway only as backup.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: k } = await supabaseAdmin.from("ai_keys").select("google_key").eq("id", 1).maybeSingle();
+  const gk = k?.google_key?.trim() || process.env["GOOGLE_API_KEY"];
+  const req = (url: string, auth: string, model: string) => fetch(url, {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-    }),
+    headers: { Authorization: `Bearer ${auth}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" } }),
   });
+  let r = gk
+    ? await req("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", gk, "gemini-3.5-flash")
+    : new Response("no key", { status: 500 });
+  if (!r.ok && key) r = await req("https://ai.gateway.lovable.dev/v1/chat/completions", key, "google/gemini-3-flash-preview");
   if (!r.ok) {
     console.error(`gatekeeper failed [${r.status}]: ${await r.text()}`);
     return [];

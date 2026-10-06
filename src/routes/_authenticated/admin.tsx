@@ -291,46 +291,54 @@ function KeyPool({ pool, setPool, show }: { pool: PoolKey[]; setPool: (p: PoolKe
   );
 }
 
-type HC = { name: string; ok: boolean; ms: number; detail: string };
+type Issue = { id: string; area: string; title: string; detail: string; fix?: string; fixLabel?: string };
+type Scan = { issues: Issue[]; passed: string[]; at: string; repaired?: { ok: boolean; message: string } };
 
 function HealthCheck() {
-  const [res, setRes] = useState<{ checks: HC[]; at: string } | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const [res, setRes] = useState<Scan | null>(null);
+  const [live, setLive] = useState<string | null>(null);
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   useEffect(() => {
     supabase.from("health_checks").select("results").order("id", { ascending: false }).limit(1).maybeSingle()
-      .then(({ data }) => data && setRes(data.results as unknown as { checks: HC[]; at: string }));
+      .then(({ data }) => { const r = data?.results as any; if (r?.issues) setRes(r); });
   }, []);
-  const run = async () => {
-    setBusy(true); setErr("");
-    const { data } = await supabase.auth.getSession();
-    const r = await fetch("/api/health", { method: "POST", headers: { Authorization: `Bearer ${data.session?.access_token}` } });
-    if (r.ok) setRes(await r.json()); else setErr(await r.text());
-    setBusy(false);
+  const run = async (fix?: string, label?: string) => {
+    setNote(null);
+    setLive(fix ? `"${label}" সমাধান করা হচ্ছে, তারপর আবার স্ক্যান চলবে…` : "পুরো সিস্টেম স্ক্যান চলছে — ডাটাবেস, এআই, ছবি, কী-পুল, ড্রাইভ, অ্যাডমিন…");
+    try {
+      const { data } = await supabase.auth.getSession();
+      const r = await fetch("/api/health", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token}` }, body: JSON.stringify(fix ? { fix } : {}) });
+      if (!r.ok) throw new Error(await r.text());
+      const j: Scan = await r.json();
+      setRes(j);
+      if (fix) {
+        const still = j.issues.some((i) => i.fix === fix);
+        setNote({ ok: !!j.repaired?.ok && !still, text: `${j.repaired?.message ?? ""}${still ? " — কিন্তু সমস্যাটি এখনো আছে" : " — যাচাই করে দেখা গেছে সমাধান হয়েছে"}` });
+      } else setNote({ ok: j.issues.length === 0, text: j.issues.length ? `${j.issues.length}টি প্রকৃত সমস্যা পাওয়া গেছে` : "কোনো সমস্যা নেই — সব সচল" });
+    } catch (e: any) { setNote({ ok: false, text: e?.message || "স্ক্যান ব্যর্থ" }); }
+    setLive(null);
   };
   return (
     <section className="mt-6 rounded-2xl border border-border bg-card/80 p-6">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="font-display text-xl text-primary">৯. সিস্টেম স্বাস্থ্য পরীক্ষা</h2>
-        <button onClick={run} disabled={busy} className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">
-          {busy ? "পরীক্ষা চলছে…" : "এখন পরীক্ষা করুন"}
-        </button>
+        <h2 className="font-display text-xl text-primary">৯. মেগা ডায়াগনস্টিক সেন্টার</h2>
+        <button onClick={() => run()} disabled={!!live} className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60">পুরো স্ক্যান করুন</button>
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {res ? `সর্বশেষ পরীক্ষা: ${new Date(res.at).toLocaleString("bn-BD")}` : "এখনো কোনো পরীক্ষা হয়নি।"}
-      </p>
-      {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
+      <p className="mt-1 text-sm text-muted-foreground">{res ? `সর্বশেষ স্ক্যান: ${new Date(res.at).toLocaleString("bn-BD")}` : "এখনো স্ক্যান হয়নি।"}</p>
+      {live && <p className="live-status mt-3 text-sm">{live}</p>}
+      {note && !live && <p className={`mt-3 text-sm ${note.ok ? "text-primary" : "text-destructive"}`}>{note.ok ? "সফল: " : "ফলাফল: "}{note.text}</p>}
+      {res && res.issues.length === 0 && <p className="mt-3 rounded-lg border border-primary/40 px-3 py-2 text-sm text-primary">কোনো সক্রিয় সমস্যা নেই।</p>}
       <ul className="mt-3 space-y-2">
-        {res?.checks.map((c) => (
-          <li key={c.name} className="flex items-start justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
-            <span>
-              <span className={c.ok ? "text-primary" : "text-destructive"}>{c.ok ? "● সচল" : "● সমস্যা"}</span>{" "}
-              <b>{c.name}</b> — {c.detail}
-            </span>
-            <span className="shrink-0 text-muted-foreground">{c.ms} ms</span>
+        {res?.issues.map((c) => (
+          <li key={c.id} className="flex items-center justify-between gap-3 rounded-lg border border-destructive/40 px-3 py-2 text-sm">
+            <span><span className="text-destructive">{c.area}:</span> <b>{c.title}</b><br /><span className="text-xs text-muted-foreground">{c.detail}</span></span>
+            {c.fix ? (
+              <button onClick={() => run(c.fix, c.title)} disabled={!!live} className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs text-primary-foreground disabled:opacity-60">সমাধান করুন</button>
+            ) : <span className="shrink-0 text-xs text-muted-foreground">হাতে ঠিক করতে হবে</span>}
           </li>
         ))}
       </ul>
+      {res && res.passed.length > 0 && <p className="mt-3 text-xs text-muted-foreground">সচল: {res.passed.join(" · ")}</p>}
     </section>
   );
 }

@@ -128,7 +128,7 @@ ${existing.map((m) => "- " + m.text).join("\n") || "(কিছু নেই)"}
     body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" } }),
   });
   let r = gk
-    ? await req("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", gk, "gemini-3.8-flash")
+    ? await req("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", gk, "gemini-3.5-flash")
     : new Response("no key", { status: 500 });
   if (!r.ok && key) r = await req("https://ai.gateway.lovable.dev/v1/chat/completions", key, "google/gemini-3-flash-preview");
   if (!r.ok) {

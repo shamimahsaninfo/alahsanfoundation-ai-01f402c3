@@ -9,14 +9,14 @@ type Ctx = { admin: any; settings: any; keys: any; issues: Issue[]; passed: stri
 
 const FOUNDER = "alahsanfoundation.info@gmail.com";
 const GOOGLE_CHAT = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-const WORKING_GOOGLE_MODELS = ["gemini-3.8-flash", "gemini-3-flash-preview"];
+const WORKING_GOOGLE_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-3-flash-preview"];
 const TINY_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 const TABLES = ["ai_settings", "ai_keys", "conversations", "messages", "pages", "health_checks", "chat_usage", "user_roles"];
 
 async function chatCall(url: string, key: string, model: string, content: unknown) {
   const r = await fetch(url, {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${String(key ?? "").replace(/[^\x21-\x7E]/g, "")}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model, messages: [{ role: "user", content }] }),
     signal: AbortSignal.timeout(25000),
   }).catch((e) => new Response(String(e), { status: 599 }));
@@ -36,7 +36,7 @@ function classify(status: number, text: string) {
 
 function chatTarget(ctx: Ctx) {
   const provider = ctx.settings?.provider ?? "google";
-  const model = ctx.settings?.model ?? "gemini-3.8-flash";
+  const model = ctx.settings?.model ?? "gemini-3.5-flash";
   if (provider === "google") return { url: GOOGLE_CHAT, key: ctx.keys?.google_key?.trim() || process.env["GOOGLE_API_KEY"], model, provider };
   if (provider === "openai") return { url: "https://api.openai.com/v1/chat/completions", key: ctx.keys?.openai_key?.trim(), model, provider };
   return { url: "https://ai.gateway.lovable.dev/v1/chat/completions", key: process.env["LOVABLE_API_KEY"], model, provider };
@@ -78,7 +78,7 @@ const PROBES: Record<string, (c: Ctx) => Promise<void>> = {
     await Promise.all(pool.map(async (p, i) => {
       if (p?.active === false || !p?.key?.trim()) return;
       const url = p.provider === "custom" ? `${String(p.base_url ?? "").replace(/\/$/, "")}/chat/completions` : p.provider === "openai" ? "https://api.openai.com/v1/chat/completions" : GOOGLE_CHAT;
-      const model = p.model?.trim() || (p.provider === "google" ? c.settings?.model || "gemini-3.8-flash" : "gpt-4o");
+      const model = p.model?.trim() || (p.provider === "google" ? c.settings?.model || "gemini-3.5-flash" : "gpt-4o");
       const r = await chatCall(url, p.key.trim(), model, "ok");
       if (r.ok) return void c.passed.push(`অতিরিক্ত কী: ${p.name || i + 1}`);
       const temp = r.status === 429 || r.status >= 500;
@@ -125,7 +125,7 @@ async function scan(admin: any) {
 
 async function repair(admin: any, fix: string): Promise<string> {
   if (fix === "enable_chat") { await admin.from("ai_settings").update({ chat_enabled: true }).eq("id", 1); return "চ্যাট চালু করা হয়েছে"; }
-  if (fix === "create_settings") { await admin.from("ai_settings").upsert({ id: 1, provider: "google", model: "gemini-3.8-flash", chat_enabled: true }); return "সেটিংস তৈরি হয়েছে"; }
+  if (fix === "create_settings") { await admin.from("ai_settings").upsert({ id: 1, provider: "google", model: "gemini-3.5-flash", chat_enabled: true }); return "সেটিংস তৈরি হয়েছে"; }
   if (fix === "switch_model") {
     const { data: k } = await admin.from("ai_keys").select("google_key").eq("id", 1).maybeSingle();
     const key = k?.google_key?.trim() || process.env["GOOGLE_API_KEY"];

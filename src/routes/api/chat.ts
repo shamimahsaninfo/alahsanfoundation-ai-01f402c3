@@ -142,7 +142,19 @@ export const Route = createFileRoute("/api/chat")({
         }
         if (s?.site_builder === false) system += "\n\nএখন ওয়েবসাইট তৈরির সুবিধা বন্ধ আছে।";
         
+        const now = new Date();
+        const dhaka = new Intl.DateTimeFormat("bn-BD", { timeZone: "Asia/Dhaka", weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" }).format(now);
+        system += `\n\n=== বর্তমান সময় (সার্ভার ঘড়ি, নিশ্চিত) ===\nএখন বাংলাদেশ সময়: ${dhaka} (ISO: ${now.toISOString()})। তারিখ/সময় জিজ্ঞেস করলে এটিই সরাসরি বলবে; "জানি না" বলবে না।`;
+
         const textMsgs = parsed.data.messages.map((m) => ({ role: m.role, content: m.content }));
+        const lastQ = String(textMsgs[textMsgs.length - 1]?.content ?? "");
+        const ws = await import("@/lib/web-search.server");
+        if (ws.needsLiveSearch(lastQ)) {
+          const found = await ws.liveSearch(lastQ).catch(() => "");
+          system += found
+            ? `\n\n=== লাইভ অনলাইন অনুসন্ধানের ফল (এইমাত্র ইন্টারনেট থেকে আনা) ===\n${found}\nএই তথ্য ব্যবহার করে হালনাগাদ উত্তর দেবে, দাম/খবরের উৎস (সাইটের নাম) উল্লেখ করবে, এবং দাম জায়গা ও ব্র্যান্ড ভেদে ভিন্ন হতে পারে তা জানাবে। "ইন্টারনেট সংযোগ নেই" বলবে না।`
+            : `\n\n(লাইভ অনুসন্ধান এই মুহূর্তে ফল দেয়নি; জানা তথ্য থেকে উত্তর দিয়ে সৎভাবে বলবে যে হালনাগাদ দাম যাচাই করা যায়নি।)`;
+        }
         if (s?.url_reader !== false) {
           const last = textMsgs[textMsgs.length - 1];
           if (last) {
@@ -195,8 +207,12 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         type PoolKey = { name?: string; provider?: string; key?: string; base_url?: string; model?: string; active?: boolean };
+        // অদৃশ্য অক্ষর (যেমন zero-width space) কী থেকে সরিয়ে ফেলা হয়
+        const clean = (k?: string) => (k ?? "").replace(/[^\x21-\x7E]/g, "");
+        key = clean(key);
         const pool = (Array.isArray((keys as { key_pool?: unknown })?.key_pool) ? (keys as { key_pool: PoolKey[] }).key_pool : [])
-          .filter((p) => p && p.active !== false && p.key?.trim());
+          .map((p) => ({ ...p, key: clean(p?.key), base_url: (p?.base_url ?? "").replace(/[^\x21-\x7E]/g, "") }))
+          .filter((p) => p && p.active !== false && p.key);
         const attempts: { url: string; key: string; model: string; label: string }[] = [{ url, key, model, label: "primary" }];
         for (const p of pool) {
           if (p.provider === provider && p.key!.trim() !== key) attempts.push({ url, key: p.key!.trim(), model, label: p.name || provider });
@@ -210,20 +226,35 @@ export const Route = createFileRoute("/api/chat")({
         let res: Response = new Response("no attempt", { status: 500 });
         let realErr: { status: number; text: string } | null = null;
 
+        // ব্যস্ত মডেল আটকে গেলে একই কী দিয়ে সচল মডেলে চেষ্টা
+        if (provider === "google" && model !== "gemini-3.5-flash")
+          attempts.splice(1, 0, { url, key, model: "gemini-3.5-flash", label: "primary" });
         for (const a of attempts) {
           if (hasImage && a.label !== "primary" && !a.url.includes("generativelanguage.googleapis.com") && !a.url.includes("openai.com")) continue;
+          // শুধু উত্তর শুরু হওয়া পর্যন্ত ২৫ সেকেন্ড অপেক্ষা; শুরু হলে লম্বা উত্তর কাটা পড়বে না
+          const ctl = new AbortController();
+          const timer = setTimeout(() => ctl.abort(), 25000);
           res = await fetch(a.url, {
             method: "POST",
             headers: { Authorization: `Bearer ${a.key}`, "Content-Type": "application/json" },
             body: JSON.stringify({ ...body, model: a.model }),
-            signal: AbortSignal.timeout(60000),
-          }).catch((e) => new Response(String(e?.name === "TimeoutError" ? "timeout" : e), { status: e?.name === "TimeoutError" ? 504 : 502 }));
+            signal: ctl.signal,
+          }).catch((e) => new Response(String(e?.name === "AbortError" ? "timeout" : e), { status: e?.name === "AbortError" ? 504 : 502 }));
+          clearTimeout(timer);
           if (res.ok && res.body) break;
           const t = (await res.text()).slice(0, 500);
           realErr ??= { status: res.status, text: t };
           console.error(`Key "${a.label}" failed [${res.status}]: ${t.slice(0, 300)}`);
         }
 
+        // গুগল সাময়িক ব্যস্ত (৫০৩/৪২৯) হলে একটু থেমে আরেকবার চেষ্টা
+        if ((!res.ok || !res.body) && provider === "google" && realErr && (realErr.status === 503 || realErr.status === 429)) {
+          for (const wait of [2500, 5000]) {
+            await new Promise((r) => setTimeout(r, wait));
+            const r2 = await fetch(url, { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify({ ...body, model: "gemini-3.5-flash" }) }).catch(() => null);
+            if (r2?.ok && r2.body) { res = r2; break; }
+          }
+        }
         if ((!res.ok || !res.body) && provider !== "lovable" && process.env["LOVABLE_API_KEY"]) {
           const gwModel = `${provider}/${model}`.replace(/^google\/gemini-(1|2)\.\d.*$/, "google/gemini-3.1-pro-preview");
           const g = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

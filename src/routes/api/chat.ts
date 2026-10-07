@@ -226,14 +226,21 @@ export const Route = createFileRoute("/api/chat")({
         let res: Response = new Response("no attempt", { status: 500 });
         let realErr: { status: number; text: string } | null = null;
 
+        // ব্যস্ত মডেল আটকে গেলে একই কী দিয়ে সচল মডেলে চেষ্টা
+        if (provider === "google" && model !== "gemini-3.5-flash")
+          attempts.splice(1, 0, { url, key, model: "gemini-3.5-flash", label: "primary" });
         for (const a of attempts) {
           if (hasImage && a.label !== "primary" && !a.url.includes("generativelanguage.googleapis.com") && !a.url.includes("openai.com")) continue;
+          // শুধু উত্তর শুরু হওয়া পর্যন্ত ২৫ সেকেন্ড অপেক্ষা; শুরু হলে লম্বা উত্তর কাটা পড়বে না
+          const ctl = new AbortController();
+          const timer = setTimeout(() => ctl.abort(), 25000);
           res = await fetch(a.url, {
             method: "POST",
             headers: { Authorization: `Bearer ${a.key}`, "Content-Type": "application/json" },
             body: JSON.stringify({ ...body, model: a.model }),
-            signal: AbortSignal.timeout(60000),
-          }).catch((e) => new Response(String(e?.name === "TimeoutError" ? "timeout" : e), { status: e?.name === "TimeoutError" ? 504 : 502 }));
+            signal: ctl.signal,
+          }).catch((e) => new Response(String(e?.name === "AbortError" ? "timeout" : e), { status: e?.name === "AbortError" ? 504 : 502 }));
+          clearTimeout(timer);
           if (res.ok && res.body) break;
           const t = (await res.text()).slice(0, 500);
           realErr ??= { status: res.status, text: t };

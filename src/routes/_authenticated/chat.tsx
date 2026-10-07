@@ -413,8 +413,8 @@ function ChatPage() {
                     </>
                   ) : (
                     <>
-                      {i === msgs.length - 1 && (loading || post !== null) && (
-                        <WorkflowStepper stage={post ?? (!m.content ? 0 : m.content.length < 300 ? 1 : 2)} />
+                      {i === msgs.length - 1 && (loading || post === 4) && (
+                        <LiveStatus label={liveLabel(msgs[i - 1]?.content ?? "", m.content, post, secs, !!msgs[i - 1]?.image)} />
                       )}
                       {m.content ? (
                         <>

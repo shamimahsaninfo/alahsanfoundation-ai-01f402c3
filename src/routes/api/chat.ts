@@ -247,6 +247,14 @@ export const Route = createFileRoute("/api/chat")({
           console.error(`Key "${a.label}" failed [${res.status}]: ${t.slice(0, 300)}`);
         }
 
+        // গুগল সাময়িক ব্যস্ত (৫০৩/৪২৯) হলে একটু থেমে আরেকবার চেষ্টা
+        if ((!res.ok || !res.body) && provider === "google" && realErr && (realErr.status === 503 || realErr.status === 429)) {
+          for (const wait of [2500, 5000]) {
+            await new Promise((r) => setTimeout(r, wait));
+            const r2 = await fetch(url, { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify({ ...body, model: "gemini-3.5-flash" }) }).catch(() => null);
+            if (r2?.ok && r2.body) { res = r2; break; }
+          }
+        }
         if ((!res.ok || !res.body) && provider !== "lovable" && process.env["LOVABLE_API_KEY"]) {
           const gwModel = `${provider}/${model}`.replace(/^google\/gemini-(1|2)\.\d.*$/, "google/gemini-3.1-pro-preview");
           const g = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

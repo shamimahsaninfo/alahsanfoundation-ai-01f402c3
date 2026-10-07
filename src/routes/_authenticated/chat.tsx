@@ -4,21 +4,18 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Mic, MicOff, Send, Plus, Trash2, Volume2, VolumeX, LogOut, Shield, Menu, Square, Copy, Check, Search, Printer, Download, Maximize2, Code2, MonitorPlay, ExternalLink, ImagePlus } from "lucide-react";
 
-const STEPS = ["বোঝা", "পরিকল্পনা", "নির্মাণ", "যাচাই", "সংশোধন", "প্রিভিউ"];
-function WorkflowStepper({ stage }: { stage: number }) {
-  return (
-    <div className="not-prose mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] tracking-wide">
-      {STEPS.map((s, i) => (
-        <span key={s} className="flex items-center gap-2">
-          <span className={`flex items-center gap-1.5 ${i < stage ? "text-primary" : i === stage ? "text-foreground" : "text-muted-foreground/50"}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${i < stage ? "bg-primary" : i === stage ? "animate-pulse bg-primary" : "bg-muted-foreground/30"}`} />
-            {s}
-          </span>
-          {i < STEPS.length - 1 && <span className={`h-px w-4 ${i < stage ? "bg-primary/60" : "bg-border"}`} />}
-        </span>
-      ))}
-    </div>
-  );
+const LIVE_Q = /আজ|আজকে|এখন|বর্তমান|সর্বশেষ|খবর|সংবাদ|দাম|দর|মূল্য|বাজার|রেট|আবহাওয়া|news|price|rate|latest|today|weather/i;
+function liveLabel(q: string, content: string, post: number | null, secs: number, hasImg: boolean) {
+  if (post === 4) return "লাইভ লিংক তৈরি হচ্ছে";
+  if (/```html/i.test(content)) return "ওয়েবসাইট কোড তৈরি হচ্ছে";
+  if (content) return "উত্তর লেখা হচ্ছে";
+  if (hasImg) return secs < 3 ? "ছবি পাঠানো হচ্ছে" : "ছবি বিশ্লেষণ করা হচ্ছে";
+  if (/ওয়েবসাইট|website|ল্যান্ডিং/i.test(q)) return secs < 3 ? "প্রয়োজন বোঝা হচ্ছে" : "ওয়েবসাইটের পরিকল্পনা সাজানো হচ্ছে";
+  if (LIVE_Q.test(q)) return secs < 6 ? "অনলাইনে তথ্য অনুসন্ধান করা হচ্ছে" : "পাওয়া তথ্য যাচাই করা হচ্ছে";
+  return secs < 4 ? "প্রশ্ন বিশ্লেষণ করা হচ্ছে" : secs < 12 ? "উত্তর সাজানো হচ্ছে" : "আরেকটু সময় লাগছে, কাজ চলছে";
+}
+function LiveStatus({ label }: { label: string }) {
+  return <div className="not-prose mb-2 text-sm font-medium"><span className="live-status">{label}…</span></div>;
 }
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";

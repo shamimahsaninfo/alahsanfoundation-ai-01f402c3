@@ -1,0 +1,71 @@
+// Browser-only helpers: document text extraction, bookmarks, share cards.
+
+export async function extractDocText(file: File): Promise<string> {
+  const name = file.name.toLowerCase();
+  if (/\.(txt|md|csv|json|html?|xml|js|ts|py|css)$/.test(name) || file.type.startsWith("text/")) {
+    return await file.text();
+  }
+  if (name.endsWith(".docx")) {
+    const mammoth = await import("mammoth");
+    const r = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+    return r.value;
+  }
+  if (name.endsWith(".pdf")) {
+    const pdfjs = await import("pdfjs-dist");
+    const worker = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+    pdfjs.GlobalWorkerOptions.workerSrc = worker;
+    const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+    const out: string[] = [];
+    const max = Math.min(doc.numPages, 60);
+    for (let p = 1; p <= max; p++) {
+      const page = await doc.getPage(p);
+      const tc = await page.getTextContent();
+      out.push(`--- পৃষ্ঠা ${p} ---\n` + tc.items.map((it) => ("str" in it ? it.str : "")).join(" "));
+    }
+    return out.join("\n\n");
+  }
+  throw new Error("এই ধরনের ফাইল পড়া যায় না। PDF, Word (.docx), CSV বা লেখা ফাইল দিন।");
+}
+
+export type Bookmark = { id: string; content: string; at: number };
+const BK = "alahsan-bookmarks";
+export function loadBookmarks(): Bookmark[] {
+  try { return JSON.parse(localStorage.getItem(BK) || "[]"); } catch { return []; }
+}
+export function saveBookmarks(b: Bookmark[]) {
+  localStorage.setItem(BK, JSON.stringify(b.slice(0, 200)));
+}
+
+export function downloadShareCard(text: string) {
+  const W = 1080, H = 1350, pad = 90;
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const g = c.getContext("2d")!;
+  const css = getComputedStyle(document.documentElement);
+  const bg = css.getPropertyValue("--background").trim() || "#0f1a14";
+  const fg = css.getPropertyValue("--foreground").trim() || "#f4efe0";
+  const pr = css.getPropertyValue("--primary").trim() || "#c9a24a";
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  g.strokeStyle = pr; g.lineWidth = 6; g.strokeRect(40, 40, W - 80, H - 80);
+  g.fillStyle = pr; g.font = "600 44px 'Hind Siliguri', sans-serif"; g.textAlign = "center";
+  g.fillText("আল আহসান এআই", W / 2, 140);
+  g.fillStyle = fg; g.font = "400 38px 'Hind Siliguri', sans-serif"; g.textAlign = "left";
+  const clean = text.replace(/```[\s\S]*?```/g, "").replace(/[#*_>`|]/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").trim();
+  const lines: string[] = [];
+  for (const para of clean.split("\n")) {
+    let cur = "";
+    for (const w of para.split(/\s+/)) {
+      const t = cur ? cur + " " + w : w;
+      if (g.measureText(t).width > W - pad * 2 && cur) { lines.push(cur); cur = w; } else cur = t;
+    }
+    lines.push(cur);
+  }
+  let y = 230;
+  for (const l of lines) { if (y > H - 160) { g.fillText("...", pad, y); break; } g.fillText(l, pad, y); y += 58; }
+  g.fillStyle = pr; g.font = "400 28px 'Hind Siliguri', sans-serif"; g.textAlign = "center";
+  g.fillText("আল আহসান ফাউন্ডেশন বাংলাদেশ", W / 2, H - 90);
+  const a = document.createElement("a");
+  a.href = c.toDataURL("image/png");
+  a.download = "al-ahsan-card.png";
+  a.click();
+}

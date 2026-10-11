@@ -7,129 +7,13 @@ import remarkGfm from "remark-gfm";
 import { Mic, MicOff, Send, Plus, Trash2, Volume2, VolumeX, LogOut, Shield, Menu, Square, Copy, Check, Search, Printer, Download, Maximize2, Code2, MonitorPlay, ExternalLink, ImagePlus, Compass, Paperclip, Bookmark as BookmarkIcon, BookmarkCheck, Share2, Globe, Sparkles, Brain, CheckCircle2, Loader2 } from "lucide-react";
 import { extractDocText, loadBookmarks, saveBookmarks, downloadShareCard, type Bookmark } from "@/lib/extras";
 import { ChartBlock } from "@/components/ChartBlock";
-const STAGE_CONFIG: Record<string, { label: string; sub: string; icon: string }> = {
-  geo: { label: "ভৌগোলিক অবস্থান শনাক্ত হচ্ছে", sub: "স্থানীয় প্রসঙ্গ মেলানো হচ্ছে...", icon: "globe" },
-  think: { label: "আপনার প্রশ্ন বিশ্লেষণ করা হচ্ছে", sub: "মূল বিষয়বস্তু ও প্রয়োজনীয়তা যাচাই হচ্ছে...", icon: "brain" },
-  search: { label: "অনলাইনে লাইভ তথ্য অনুসন্ধান চলছে", sub: "ইন্টারনেট থেকে সর্বশেষ ডেটা খোঁজা হচ্ছে...", icon: "globe" },
-  verify: { label: "উৎস ও প্রামাণ্য দলীলসমূহ যাচাই হচ্ছে", sub: "তথ্য যাচাই করে মূল পয়েন্ট সংকলন হচ্ছে...", icon: "search" },
-  code: { label: "সফটওয়্যারের কোড প্রস্তুত হচ্ছে", sub: "রেসপনসিভ ডিজাইন ও আর্কিটেকচার তৈরি হচ্ছে...", icon: "code" },
-  image: { label: "ছবি ও কনটেন্ট প্রস্তুত হচ্ছে", sub: "ভিজ্যুয়াল প্রসেসিং চলছে...", icon: "sparkles" },
-  fallback: { label: "বিকল্প সংযোগে চেষ্টা চলছে", sub: "নির্ভরযোগ্য উত্তর আনা হচ্ছে...", icon: "sparkles" },
-  write: { label: "চূড়ান্ত উত্তর প্রস্তুত ও লেখা হচ্ছে", sub: "সাবলীল ভাষায় পূর্ণাঙ্গ উত্তর সাজানো হচ্ছে...", icon: "sparkles" },
-  build: { label: "ওয়েবসাইট লাইভ ডেপ্লয় হচ্ছে", sub: "হোস্টিং সার্ভারে সংযুক্ত হচ্ছে...", icon: "code" },
-  test: { label: "লাইভ লিংক পরীক্ষা করা হচ্ছে", sub: "ব্রাউজার প্রিভিউ প্রস্তুত হচ্ছে...", icon: "sparkles" },
-  done: { label: "সম্পূর্ণ কাজ সফলভাবে সম্পন্ন হয়েছে", sub: "উত্তর প্রস্তুত!", icon: "check" },
-};
-const WAIT_HINTS = [
-  { label: "প্রশ্নের গভীর বিশ্লেষণ চলছে", sub: "গুরুত্বপূর্ণ বিষয়গুলো চিহ্নিত হচ্ছে..." },
-  { label: "প্রয়োজনীয় তথ্য গোছানো হচ্ছে", sub: "উৎসসমূহ যাচাই করা হচ্ছে..." },
-  { label: "উত্তরের কাঠামো তৈরি হচ্ছে", sub: "বিশদ ও সাবলীল উপস্থাপনা সাজানো হচ্ছে..." },
-  { label: "চূড়ান্ত রূপ দেওয়া হচ্ছে", sub: "একটুখানি অপেক্ষা করুন..." },
-];
-function WorkflowStepper({ stages, current }: { stages: string[]; current: number }) {
-  const totalStages = Math.max(stages.length, 1);
-  const curStageKey = stages[Math.min(current, stages.length - 1)] ?? "think";
-  const finished = current >= stages.length;
-  const [sec, setSec] = useState(0);
-  useEffect(() => {
-    if (finished) return;
-    const t = setInterval(() => setSec((s) => s + 1), 1000);
-    return () => clearInterval(t);
-  }, [finished]);
-  // পার্সেন্টেজ হিসাব (কতটুকু হলো ও কতটুকু বাকি)
-  const currentStepNum = finished ? totalStages : Math.min(current + 1, totalStages);
-  const rawPercent = finished
-    ? 100
-    : Math.min(95, Math.max(15, Math.round((currentStepNum / (totalStages + 1)) * 100) + Math.min(sec * 3, 15)));
-  const fallback = { label: curStageKey, sub: "প্রসেসিং চলছে...", icon: "sparkles" };
-  const rawInfo: { label: string; sub: string; icon?: string } | undefined = finished
-    ? STAGE_CONFIG["done"]
-    : curStageKey === "think" && sec >= 4
-    ? WAIT_HINTS[Math.min(Math.floor((sec - 4) / 4), WAIT_HINTS.length - 1)]
-    : STAGE_CONFIG[curStageKey];
-  const info = { ...fallback, ...(rawInfo ?? {}), icon: rawInfo?.icon ?? (curStageKey === "think" ? "brain" : "sparkles") };
-  const bnNum = (n: number) => String(n).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[Number(d)]!);
-  const renderIcon = (iconName: string) => {
-    switch (iconName) {
-      case "globe": return <Globe size={18} className="text-primary animate-spin-slow" />;
-      case "search": return <Search size={18} className="text-primary animate-pulse" />;
-      case "code": return <Code2 size={18} className="text-primary animate-pulse" />;
-      case "brain": return <Brain size={18} className="text-primary animate-pulse" />;
-      case "check": return <CheckCircle2 size={18} className="text-emerald-500" />;
-      default: return <Sparkles size={18} className="text-primary animate-spin-slow" />;
-    }
-  };
-  return (
-    <div className="not-prose my-3.5 overflow-hidden rounded-2xl border border-primary/25 bg-card/90 p-4 shadow-md backdrop-blur-sm animate-in fade-in duration-300">
-      {/* হেডার অংশ: আইকন, রানিং স্ট্যাটাস ও শতাংশ */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 shadow-inner">
-            {renderIcon(info.icon)}
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="live-status-shimmer truncate text-sm font-bold sm:text-base">
-                {info.label}
-              </span>
-              {!finished && (
-                <span className="inline-flex h-2 w-2 rounded-full bg-primary animate-ping" />
-              )}
-            </div>
-            <p className="truncate text-xs text-muted-foreground mt-0.5">
-              {info.sub}
-            </p>
-          </div>
-        </div>
-        {/* কতটুকু কাজ হলো ও সময় */}
-        <div className="shrink-0 text-right">
-          <div className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary border border-primary/20">
-            <span>{bnNum(rawPercent)}%</span>
-          </div>
-          {!finished && sec > 0 && (
-            <span className="block text-[11px] text-muted-foreground mt-1">
-              {bnNum(sec)} সেকেন্ড
-            </span>
-          )}
-        </div>
-      </div>
-      {/* প্রোগ্রেস বার (চকচক অ্যানিমেশন ও লাইভ ফিল সহ) */}
-      <div className="relative mt-3.5 h-2 w-full overflow-hidden rounded-full bg-muted/60">
-        <div
-          className="relative h-full rounded-full bg-gradient-to-r from-primary/70 via-primary to-primary transition-all duration-700 ease-out"
-          style={{ width: `${rawPercent}%` }}
-        >
-          {/* চকচকে আলোর গ্লাইডার */}
-          {!finished && <div className="live-bar-shimmer absolute inset-0" />}
-        </div>
-      </div>
-      {/* নিচের ধাপসমূহ (কতটুকু শেষ আর কতটুকু বাকি) */}
-      <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-2 text-[11px] text-muted-foreground">
-        <span>
-          ধাপ: <b className="text-foreground">{bnNum(currentStepNum)}</b> / {bnNum(totalStages)}
-          {finished ? " (সম্পন্ন)" : ` (বাকি ${bnNum(Math.max(0, 100 - rawPercent))}%)`}
-        </span>
-        <div className="flex items-center gap-1.5 overflow-hidden text-right">
-          {stages.map((st, idx) => {
-            const isDone = idx < current || finished;
-            const isCurrent = idx === current && !finished;
-            return (
-              <span
-                key={st + idx}
-                className={`inline-block h-1.5 rounded-full transition-all ${
-                  isDone
-                    ? "w-4 bg-primary"
-                    : isCurrent
-                    ? "w-6 bg-primary animate-pulse"
-                    : "w-2 bg-muted-foreground/30"
-                }`}
-                title={STAGE_CONFIG[st]?.label ?? st}
-              />
-            );
-          })}
-        </div>
-      </div>
-    </div>
+ if (LIVE_Q.test(q)) return secs < 6 ? "অনলাইনে তথ্য অনুসন্ধান করা হচ্ছে" : "পাওয়া তথ্য যাচাই করা হচ্ছে";
+  return secs < 4 ? "প্রশ্ন বিশ্লেষণ করা হচ্ছে" : secs < 12 ? "উত্তর সাজানো হচ্ছে" : "আরেকটু সময় লাগছে, কাজ চলছে";
+}
+function LiveStatus({ label }: { label: string }) {
+  return <div className="not-prose mb-2 text-sm font-medium"><span className="live-status">{label}…</span></div>;
+}
+
   );
 }
 // উত্তরের শেষে [[প্রশ্ন: ...]] আকারে ফলো-আপ প্রশ্ন থাকে — আলাদা করা

@@ -14,6 +14,7 @@ import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedSalatRouteImport } from './routes/_authenticated/salat'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiMemoryRouteImport } from './routes/api/memory'
@@ -43,6 +44,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
 const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSalatRoute = AuthenticatedSalatRouteImport.update({
+  id: '/salat',
+  path: '/salat',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/$slug': typeof SlugRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/chat': typeof AuthenticatedChatRoute
+  '/salat': typeof AuthenticatedSalatRoute
   '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
   '/api/memory': typeof ApiMemoryRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/$slug': typeof SlugRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/chat': typeof AuthenticatedChatRoute
+  '/salat': typeof AuthenticatedSalatRoute
   '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
   '/api/memory': typeof ApiMemoryRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/$slug': typeof SlugRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/chat': typeof AuthenticatedChatRoute
+  '/_authenticated/salat': typeof AuthenticatedSalatRoute
   '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
   '/api/memory': typeof ApiMemoryRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/admin'
     | '/chat'
+    | '/salat'
     | '/api/chat'
     | '/api/health'
     | '/api/memory'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/admin'
     | '/chat'
+    | '/salat'
     | '/api/chat'
     | '/api/health'
     | '/api/memory'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/_authenticated/admin'
     | '/_authenticated/chat'
+    | '/_authenticated/salat'
     | '/api/chat'
     | '/api/health'
     | '/api/memory'
@@ -203,6 +215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/salat': {
+      id: '/_authenticated/salat'
+      path: '/salat'
+      fullPath: '/salat'
+      preLoaderRoute: typeof AuthenticatedSalatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -251,11 +270,13 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
+  AuthenticatedSalatRoute: typeof AuthenticatedSalatRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedChatRoute: AuthenticatedChatRoute,
+  AuthenticatedSalatRoute: AuthenticatedSalatRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

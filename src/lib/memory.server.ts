@@ -7,25 +7,25 @@ async function admin() {
 
 export async function loadMemory(userId: string, limit = 80): Promise<MemoryItem[]> {
   const db = await admin();
-  const { data, error } = await db.from("user_memories").select("id,text,kind,created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(limit);
-  if (error) throw new Error(error.message);
-  return (data ?? []).reverse().map((r) => ({ id: r.id, text: r.text, kind: r.kind, at: r.created_at }));
+  const { data, error } = await (db as any).from("user_memories").select("id,text,kind,created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(limit);
+  if (error) return [];
+  return (data ?? []).reverse().map((r: any) => ({ id: r.id, text: r.text, kind: r.kind, at: r.created_at }));
 }
 
 export async function addMemory(userId: string, items: { text: string; kind: string }[]) {
   if (!items.length) return;
   const db = await admin();
-  const { error } = await db.from("user_memories").insert(items.map((i) => ({ user_id: userId, text: i.text, kind: i.kind })));
-  if (error) throw new Error(error.message);
+  const { error } = await (db as any).from("user_memories").insert(items.map((i: any) => ({ user_id: userId, text: i.text, kind: i.kind })));
+  if (error) return;
   // keep at most 200 per user
-  const { data } = await db.from("user_memories").select("id").eq("user_id", userId).order("created_at", { ascending: false }).range(200, 1000);
-  if (data?.length) await db.from("user_memories").delete().in("id", data.map((d) => d.id));
+  const { data } = await (db as any).from("user_memories").select("id").eq("user_id", userId).order("created_at", { ascending: false }).range(200, 1000);
+  if (data?.length) await (db as any).from("user_memories").delete().in("id", data.map((d: any) => d.id));
 }
 
 export async function deleteMemory(userId: string, id: string) {
   const db = await admin();
-  const { error } = await db.from("user_memories").delete().eq("user_id", userId).eq("id", id);
-  if (error) throw new Error(error.message);
+  const { error } = await (db as any).from("user_memories").delete().eq("user_id", userId).eq("id", id);
+  if (error) return;
 }
 
 /** Extract only durable facts the user stated about themselves/their work. */

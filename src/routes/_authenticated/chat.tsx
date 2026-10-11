@@ -241,7 +241,14 @@ function ChatPage() {
   const [flow, setFlow] = useState<{ stages: string[]; current: number } | null>(null);
   const pushStage = (st: string, finish = false) => setFlow((f) => { const stages = f ? (f.stages.includes(st) ? f.stages : [...f.stages, st]) : [st]; return { stages, current: finish ? stages.length : stages.indexOf(st) }; });
   const [voiceOut, setVoiceOut] = useState(false);
-  const [listening, setListening] = useState(false);
+    const [secs, setSecs] = useState(0);
+  useEffect(() => {
+    if (!loading) return;
+    setSecs(0);
+    const t = setInterval(() => setSecs((x) => x + 1), 1000);
+    return () => clearInterval(t);
+  }, [loading]);
+ const [listening, setListening] = useState(false);
   const [sidebar, setSidebar] = useState(false);
   const [cfg, setCfg] = useState<{ welcome_title?: string; welcome_subtitle?: string; suggestions?: string }>({});
   const [speaking, setSpeaking] = useState<number | null>(null);

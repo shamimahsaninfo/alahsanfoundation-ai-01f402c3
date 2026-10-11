@@ -9,14 +9,14 @@ type Ctx = { admin: any; settings: any; keys: any; issues: Issue[]; passed: stri
 
 const FOUNDER = "alahsanfoundation.info@gmail.com";
 const GOOGLE_CHAT = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-const WORKING_GOOGLE_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-3-flash-preview"];
+const WORKING_GOOGLE_MODELS = ["gemini-3.8-flash", "gemini-3-flash-preview"];
 const TINY_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
-const TABLES = ["ai_settings", "ai_keys", "conversations", "messages", "pages", "health_checks", "chat_usage", "user_roles"];
+const TABLES = ["ai_settings", "ai_keys", "conversations", "messages", "pages", "health_checks", "chat_usage", "user_roles", "user_memories"];
 
 async function chatCall(url: string, key: string, model: string, content: unknown) {
   const r = await fetch(url, {
     method: "POST",
-    headers: { Authorization: `Bearer ${String(key ?? "").replace(/[^\x21-\x7E]/g, "")}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model, messages: [{ role: "user", content }] }),
     signal: AbortSignal.timeout(25000),
   }).catch((e) => new Response(String(e), { status: 599 }));
@@ -36,7 +36,7 @@ function classify(status: number, text: string) {
 
 function chatTarget(ctx: Ctx) {
   const provider = ctx.settings?.provider ?? "google";
-  const model = ctx.settings?.model ?? "gemini-3.5-flash";
+  const model = ctx.settings?.model ?? "gemini-3.8-flash";
   if (provider === "google") return { url: GOOGLE_CHAT, key: ctx.keys?.google_key?.trim() || process.env["GOOGLE_API_KEY"], model, provider };
   if (provider === "openai") return { url: "https://api.openai.com/v1/chat/completions", key: ctx.keys?.openai_key?.trim(), model, provider };
   return { url: "https://ai.gateway.lovable.dev/v1/chat/completions", key: process.env["LOVABLE_API_KEY"], model, provider };
@@ -78,21 +78,35 @@ const PROBES: Record<string, (c: Ctx) => Promise<void>> = {
     await Promise.all(pool.map(async (p, i) => {
       if (p?.active === false || !p?.key?.trim()) return;
       const url = p.provider === "custom" ? `${String(p.base_url ?? "").replace(/\/$/, "")}/chat/completions` : p.provider === "openai" ? "https://api.openai.com/v1/chat/completions" : GOOGLE_CHAT;
-      const model = p.model?.trim() || (p.provider === "google" ? c.settings?.model || "gemini-3.5-flash" : "gpt-4o");
+      const model = p.model?.trim() || (p.provider === "google" ? c.settings?.model || "gemini-3.8-flash" : "gpt-4o");
       const r = await chatCall(url, p.key.trim(), model, "ok");
       if (r.ok) return void c.passed.push(`অতিরিক্ত কী: ${p.name || i + 1}`);
       const temp = r.status === 429 || r.status >= 500;
       c.issues.push({ id: `pool:${i}`, area: "কী-পুল", title: `"${p.name || `কী ${i + 1}`}" কাজ করছে না — ${classify(r.status, r.text)}`, detail: `${model}: ${r.text.slice(0, 140)}`, ...(temp ? {} : { fix: `disable_pool:${i}`, fixLabel: "সমাধান করুন" }) });
     }));
   },
-  async drive(c) {
-    const m = await import("@/lib/drive-memory.server");
-    if (!m.driveConfigured()) return void c.issues.push({ id: "drive:off", area: "গুগল ড্রাইভ", title: "গুগল ড্রাইভ সংযুক্ত নেই", detail: "সংযোগ নেই" });
-    const { items } = await m.loadMemory(true);
-    await m.saveMemory(items); // real write round-trip
-    const back = await m.loadMemory(true);
-    if (back.items.length !== items.length) throw new Error("লেখার পর পড়ে মিলছে না");
-    c.passed.push(`গুগল ড্রাইভ (পড়া+লেখা, ${items.length}টি স্মৃতি)`);
+  async memory(c) {
+    const { error } = await c.admin.from("user_memories").select("id", { head: true, count: "exact" });
+    if (error) return void c.issues.push({ id: "memory", area: "স্মৃতি", title: "দীর্ঘমেয়াদী স্মৃতি পড়া যাচ্ছে না", detail: error.message });
+    c.passed.push("দীর্ঘমেয়াদী স্মৃতি (ডাটাবেস)");
+  },
+  async search(c) {
+    const r = await fetch("https://html.duckduckgo.com/html/", { method: "POST", headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36", Accept: "text/html", "Content-Type": "application/x-www-form-urlencoded" }, body: "q=bangladesh", signal: AbortSignal.timeout(8000) }).catch(() => null);
+    if (r?.ok && /result__a/.test(await r.text())) return void c.passed.push("ওয়েব অনুসন্ধান");
+    const b = await fetch("https://www.bing.com/search?q=bangladesh", { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36" }, signal: AbortSignal.timeout(8000) }).catch(() => null);
+    if (b?.ok && /b_algo/.test(await b.text())) return void c.passed.push("ওয়েব অনুসন্ধান (ব্যাকআপ উৎস)");
+    c.issues.push({ id: "search", area: "ওয়েব অনুসন্ধান", title: "ওয়েব অনুসন্ধান সাড়া দিচ্ছে না", detail: `স্ট্যাটাস ${r?.status ?? "নেটওয়ার্ক"} — সাম্প্রতিক প্রশ্নে এআই সতর্কতা দিয়ে উত্তর দেবে`, });
+  },
+  async gateway(c) {
+    if (!process.env["LOVABLE_API_KEY"]) return void c.issues.push({ id: "gw:nokey", area: "বিল্ট-ইন এআই", title: "বিল্ট-ইন এআই কী নেই", detail: "ছবি তৈরি, স্মৃতি ও ব্যাকআপ উত্তর কাজ করবে না" });
+    c.passed.push("বিল্ট-ইন এআই (ছবি/স্মৃতি/ব্যাকআপ) প্রস্তুত");
+  },
+  async keys(c) {
+    const pool: any[] = Array.isArray(c.keys?.key_pool) ? c.keys.key_pool : [];
+    const all = [c.keys?.google_key, c.keys?.openai_key, ...pool.map((p) => p?.key)].map((k) => String(k ?? "").trim()).filter(Boolean);
+    if (new Set(all).size !== all.length) c.issues.push({ id: "keys:dup", area: "কী", title: "একই এপিআই কী একাধিকবার আছে", detail: "সেটিংসে গিয়ে সংরক্ষণ করুন — ডুপ্লিকেট স্বয়ংক্রিয়ভাবে বাদ যাবে" });
+    else if (pool.length > 2) c.issues.push({ id: "keys:many", area: "কী", title: `ব্যাকআপ কী ${pool.length}টি — সর্বোচ্চ ২টি রাখুন`, detail: "সেটিংসে সংরক্ষণ করলে প্রথম ২টি থাকবে" });
+    else c.passed.push("এপিআই কী ব্যবস্থাপনা");
   },
   async admin(c) {
     const { data } = await c.admin.auth.admin.listUsers({ perPage: 1000 });
@@ -125,7 +139,7 @@ async function scan(admin: any) {
 
 async function repair(admin: any, fix: string): Promise<string> {
   if (fix === "enable_chat") { await admin.from("ai_settings").update({ chat_enabled: true }).eq("id", 1); return "চ্যাট চালু করা হয়েছে"; }
-  if (fix === "create_settings") { await admin.from("ai_settings").upsert({ id: 1, provider: "google", model: "gemini-3.5-flash", chat_enabled: true }); return "সেটিংস তৈরি হয়েছে"; }
+  if (fix === "create_settings") { await admin.from("ai_settings").upsert({ id: 1, provider: "google", model: "gemini-3.8-flash", chat_enabled: true }); return "সেটিংস তৈরি হয়েছে"; }
   if (fix === "switch_model") {
     const { data: k } = await admin.from("ai_keys").select("google_key").eq("id", 1).maybeSingle();
     const key = k?.google_key?.trim() || process.env["GOOGLE_API_KEY"];

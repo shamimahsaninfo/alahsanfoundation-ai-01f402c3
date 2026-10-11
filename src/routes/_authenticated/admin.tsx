@@ -1,18 +1,3 @@
-Homepage
-
-alahsanai
-Repository
-alahsanai
-src
-routes
-_authenticated
-admin.tsx
-admin.tsx
-user avatar
- 013b500f
-15 hours ago
-admin.tsx
-30.28 KiB
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Save, Eye, EyeOff } from "lucide-react";

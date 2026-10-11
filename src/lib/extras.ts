@@ -5,28 +5,6 @@ export async function extractDocText(file: File): Promise<string> {
   if (/\.(txt|md|csv|json|html?|xml|js|ts|py|css)$/.test(name) || file.type.startsWith("text/")) {
     return await file.text();
   }
-  if (name.endsWith(".docx")) {
-    const mammoth = await import("mammoth");
-    const r = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
-    return r.value;
-  }
-  if (name.endsWith(".pdf")) {
-    const pdfjs = await import("pdfjs-dist");
-    const worker = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-    pdfjs.GlobalWorkerOptions.workerSrc = worker;
-    const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-    const out: string[] = [];
-    const max = Math.min(doc.numPages, 60);
-    for (let p = 1; p <= max; p++) {
-      const page = await doc.getPage(p);
-      const tc = await page.getTextContent();
-      out.push(`--- পৃষ্ঠা ${p} ---\n` + tc.items.map((it) => ("str" in it ? it.str : "")).join(" "));
-    }
-    return out.join("\n\n");
-  }
-  throw new Error("এই ধরনের ফাইল পড়া যায় না। PDF, Word (.docx), CSV বা লেখা ফাইল দিন।");
-}
-
 export type Bookmark = { id: string; content: string; at: number };
 const BK = "alahsan-bookmarks";
 export function loadBookmarks(): Bookmark[] {

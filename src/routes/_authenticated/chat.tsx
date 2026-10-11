@@ -147,41 +147,20 @@ function saveBlob(blob: Blob, name: string) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
-// আসল PDF ফাইল (ব্রাউজার প্রিন্ট ছাড়া) — বাংলা ঠিক রাখতে লেখাকে ছবি করে PDF-এ বসানো হয়
-async function makePdf(sections: { title?: string; text: string }[], name: string) {
-  const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-  const box = document.createElement("div");
-  box.style.cssText = "position:fixed;left:-10000px;top:0;width:760px;padding:32px;background:#ffffff;color:#111111;font-family:'Hind Siliguri',sans-serif;font-size:16px;line-height:1.8";
-  box.innerHTML = `<h2 style="margin:0 0 16px;color:#0b6b3a">আল আহসান এআই</h2>` + sections.map((s) => `${s.title ? `<div style="font-weight:700;margin-top:14px">${esc(s.title)}</div>` : ""}<div style="white-space:pre-wrap;word-break:break-word">${esc(s.text)}</div>`).join("");
-  document.body.appendChild(box);
-  try {
-    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas-pro"), import("jspdf")]);
-    const canvas = await html2canvas(box, { scale: 2, backgroundColor: "#ffffff" });
-    const pdf = new jsPDF({ unit: "pt", format: "a4" });
-    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
-    const pagePx = Math.floor((canvas.width * ph) / pw);
-    for (let y = 0, p = 0; y < canvas.height; y += pagePx, p++) {
-      const part = document.createElement("canvas");
-      part.width = canvas.width;
-      part.height = Math.min(pagePx, canvas.height - y);
-      part.getContext("2d")!.drawImage(canvas, 0, -y);
-      if (p) pdf.addPage();
-      pdf.addImage(part.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, pw, (part.height * pw) / canvas.width);
-    }
-    saveBlob(pdf.output("blob"), name);
-  } catch { alert("PDF তৈরি করা যায়নি, আবার চেষ্টা করুন।"); }
-  finally { box.remove(); }
-}
 async function exportAnswer(content: string, kind: "md" | "doc" | "pdf") {
-  if (kind === "pdf") return makePdf([{ text: content }], "al-ahsan-answer.pdf");
-  if (kind === "md") return saveBlob(new Blob([content], { type: "text/markdown;charset=utf-8" }), "al-ahsan-answer.md");
-  try {
-    const { Document, Packer, Paragraph, TextRun } = await import("docx");
-    const d = new Document({ sections: [{ children: content.split("\n").map((l) => new Paragraph({ children: [new TextRun({ text: l, font: "Nirmala UI", size: 24 })] })) }] });
-    saveBlob(await Packer.toBlob(d), "al-ahsan-answer.docx");
-  } catch { alert("Word ফাইল তৈরি করা যায়নি।"); }
+  if (kind === "pdf") {
+    window.print();
+    return;
+  }
+  if (kind === "md") {
+    return saveBlob(new Blob([content], { type: "text/markdown;charset=utf-8" }), "al-ahsan-answer.md");
+  }
+  if (kind === "doc") {
+    const html = `<html><head><meta charset="utf-8"></head><body style="font-family:'Hind Siliguri',sans-serif;line-height:1.6;white-space:pre-wrap;">${content}</body></html>`;
+    return saveBlob(new Blob([html], { type: "application/msword;charset=utf-8" }), "al-ahsan-answer.doc");
+  }
 }
-import { supabase } from "@/integrations/supabase/client";
+ import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 import { useIsAdmin } from "@/lib/admin";
 export const Route = createFileRoute("/_authenticated/chat")({

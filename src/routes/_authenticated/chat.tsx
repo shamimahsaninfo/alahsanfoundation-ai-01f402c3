@@ -201,7 +201,7 @@ function HtmlPreview({ code, streaming }: { code: string; streaming?: boolean })
         <span className="flex-1" />
         <button onClick={async () => { await navigator.clipboard.writeText(code); setOk(true); setTimeout(() => setOk(false), 1500); }} className="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-primary">{ok ? <Check size={14} /> : <Copy size={14} />} কপি</button>
         <button onClick={openFull} className="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-primary"><Maximize2 size={14} /> বড় করে</button>
-        <button onClick={async () => { const JSZip = (await import("jszip")).default; const z = new JSZip(); z.file("index.html", code); z.file("README.txt", "index.html ফাইলটি ব্রাউজারে খুলুন। তৈরি করেছে: আল আহসান এআই"); const b = await z.generateAsync({ type: "blob" }); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "website.zip"; a.click(); }} className="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-primary"><Download size={14} /> ZIP</button>
+        <button onClick={() => { const b = new Blob([code], { type: "text/html;charset=utf-8" }); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "index.html"; a.click(); }} className="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-primary"><Download size={14} /> HTML ফাইল</button> 
       </div>
       {tab === "run" ? (
         <iframe title="ওয়েবসাইট প্রিভিউ" srcDoc={withStorageShim(code)} sandbox="allow-scripts allow-forms allow-modals allow-popups" className="h-[70vh] min-h-[520px] w-full bg-white sm:h-[80vh] sm:min-h-[650px]" />

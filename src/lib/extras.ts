@@ -4,7 +4,10 @@ export async function extractDocText(file: File): Promise<string> {
   const name = file.name.toLowerCase();
   if (/\.(txt|md|csv|json|html?|xml|js|ts|py|css)$/.test(name) || file.type.startsWith("text/")) {
     return await file.text();
-  }
+  }  
+  throw new Error("এই ধরনের ফাইল পড়া যায় না। টেক্সট, কোড বা মার্কডাউন (.txt, .md, .csv) ফাইল দিন।");
+}
+
 export type Bookmark = { id: string; content: string; at: number };
 const BK = "alahsan-bookmarks";
 export function loadBookmarks(): Bookmark[] {

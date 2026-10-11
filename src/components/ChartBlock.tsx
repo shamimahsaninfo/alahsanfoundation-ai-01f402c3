@@ -1,4 +1,3 @@
-Homepage
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 type Spec = { type?: "bar" | "line" | "pie"; title?: string; data: { name: string; value: number }[] };
 const COLORS = ["var(--primary)", "var(--accent)", "var(--muted-foreground)", "var(--secondary-foreground)", "var(--ring)"];

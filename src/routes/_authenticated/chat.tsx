@@ -239,7 +239,7 @@ const makeMd = (streaming: boolean) => ({
 const mdDone = makeMd(false);
 const mdStreaming = makeMd(true);
 function printChat(msgs: Msg[]) {
-  return makePdf(msgs.map((m) => ({ title: m.role === "user" ? "আপনি" : "আল আহসান এআই", text: m.content })), "al-ahsan-chat.pdf");
+  if (typeof window !== "undefined") window.print();
 }
 function downloadChat(msgs: Msg[]) {
   const txt = msgs.map((m) => `${m.role === "user" ? "আপনি" : "আল আহসান এআই"}:\n${m.content}`).join("\n\n---\n\n");

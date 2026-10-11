@@ -535,8 +535,11 @@ function ChatPage() {
                     </>
                   ) : (
                     <>
-                      {i === msgs.length - 1 && flow && <WorkflowStepper stages={flow.stages} current={flow.current} />}
-                      {m.content ? (() => {
+                      {i === msgs.length - 1 && loading && (
+  <LiveStatus label={liveLabel(msgs[i - 1]?.content ?? "", m.content, null, secs, !!msgs[i - 1]?.image)} />
+)}
+                
+                     {m.content ? (() => {
                         const { body, followups } = splitFollowups(stripEmoji(m.content));
                         const streamingNow = loading && i === msgs.length - 1;
                         return (

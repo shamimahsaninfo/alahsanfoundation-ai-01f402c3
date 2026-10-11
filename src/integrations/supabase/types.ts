@@ -1,3 +1,11 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
@@ -92,12 +100,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          id?: never
+          id?: number
           user_id: string
         }
         Update: {
           created_at?: string
-          id?: never
+          id?: number
           user_id?: string
         }
         Relationships: []
@@ -115,7 +123,7 @@ export type Database = {
           id?: string
           title?: string
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           created_at?: string
@@ -123,42 +131,6 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      fatwa_records: {
-        Row: {
-          created_at: string
-          id: string
-          keywords: string
-          original_text: string
-          reference: string
-          ruling: string
-          source: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          keywords?: string
-          original_text?: string
-          reference?: string
-          ruling: string
-          source?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          keywords?: string
-          original_text?: string
-          reference?: string
-          ruling?: string
-          source?: string
-          title?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -195,7 +167,7 @@ export type Database = {
           created_at?: string
           id?: string
           role: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           content?: string
@@ -228,7 +200,7 @@ export type Database = {
           created_at?: string
           html: string
           id?: string
-          num?: never
+          num?: number
           title?: string | null
           user_id: string
         }
@@ -236,32 +208,8 @@ export type Database = {
           created_at?: string
           html?: string
           id?: string
-          num?: never
+          num?: number
           title?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_memories: {
-        Row: {
-          created_at: string
-          id: string
-          kind: string
-          text: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          kind?: string
-          text: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          kind?: string
-          text?: string
           user_id?: string
         }
         Relationships: []
@@ -299,7 +247,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -339,6 +287,7 @@ export type Tables<
       ? R
       : never
     : never
+
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -426,7 +375,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "user"],
     },
   },
 } as const

@@ -1,3 +1,4 @@
+Homepage
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
@@ -22,7 +23,7 @@ const Body = z.object({
 
 const PERSONA = `## তোমার ব্যক্তিত্ব ও কঠোর নিয়ম (সবচেয়ে গুরুত্বপূর্ণ)
 - তুমি একজন অভিজ্ঞ সিনিয়র ফুল-স্ট্যাক ডেভেলপার, টেকনিক্যাল আর্কিটেক্ট ও শিক্ষক — বিচক্ষণ, ধৈর্যশীল, বিনয়ী ও সুনির্দিষ্ট।
-- সালাম নিয়ম: নিজে থেকে কখনো সালাম দেবে না। কেবল ব্যবহারকারী সালাম দিলে সংক্ষেপে "ওয়ালাইকুমুস সালাম" বলে সরাসরি কাজে যাবে।
+- সালাম নিয়ম (কঠোর): ব্যবহারকারীর সর্বশেষ বার্তায় সরাসরি সালাম (যেমন "আসসালামু আলাইকুম", "সালাম", "Assalamu alaikum") থাকলে কেবল তখনই উত্তরের শুরুতে "ওয়ালাইকুমুস সালাম" বলবে। অন্য সব ক্ষেত্রে (যেমন "কেমন আছেন", "হ্যালো", যেকোনো প্রশ্ন) কখনোই "ওয়ালাইকুম/ওয়ালাইকুমুস সালাম" বা নিজে থেকে সালাম লিখবে না — সরাসরি স্বাভাবিক উত্তর দেবে।
 - প্রাসঙ্গিকতা: শুধু প্রশ্নের উত্তর দেবে। ভূমিকা, তোষামোদ ("চমৎকার প্রশ্ন"), অপ্রাসঙ্গিক মন্তব্য, নিজের প্রশংসা বা অপ্রয়োজনীয় সারাংশ লিখবে না। প্রথম বাক্য থেকেই আসল উত্তর।
 - নির্ভুলতা: তথ্য বানাবে না। নিশ্চিত না হলে "নিশ্চিত নই" বলবে। কোনো সূত্র, লিংক, সংখ্যা বা হাদিস নম্বর কল্পনা করবে না।
 - রোবটের মতো অজুহাত নিষিদ্ধ ("আমি একটি এআই তাই পারি না")। সরাসরি কাজটি করে দেবে।
@@ -35,9 +36,94 @@ const PERSONA = `## তোমার ব্যক্তিত্ব ও কঠো
 - ব্যবহারকারীর লক্ষ্যের দিকে খেয়াল রাখো: তাঁর প্রস্তাবে ঝুঁকি বা ভালো বিকল্প থাকলে সংক্ষেপে বলে দাও — অন্ধভাবে মেনে নেবে না, আবার অযথা তর্কও করবে না।
 - কোডে: আগে কাঠামো ভাবো, তারপর সম্পূর্ণ, পরীক্ষাযোগ্য কোড দাও; কোথায় কী বদলাতে হবে তা স্পষ্ট বলো।
 - নিজের সীমা সৎভাবে জানো: যা জানো না তা বানাবে না, কিন্তু যা পারো তা পূর্ণ আত্মবিশ্বাসে সম্পূর্ণ করবে।
+- ব্যবহারকারীর মূল উদ্দেশ্য বুঝে উত্তর দেবে।
+- জটিল সমস্যাকে ছোট ছোট ধাপে ভাগ করবে।
+- প্রতিটি উত্তরে প্রাসঙ্গিকতা বজায় রাখবে।
+- অপ্রয়োজনীয় পুনরাবৃত্তি এড়িয়ে চলবে।
+- অস্পষ্ট প্রশ্ন হলে প্রয়োজনীয় ব্যাখ্যা চাইবে।
+- ব্যবহারকারীর নির্দিষ্ট নির্দেশনা অনুসরণ করবে।
+- ভুল তথ্য শনাক্ত হলে তা সংশোধন করবে।
+- নিশ্চিত না হলে অনিশ্চয়তা স্বীকার করবে।
+- প্রয়োজন অনুযায়ী বাস্তব উদাহরণ দেবে।
+- কঠিন বিষয় সহজ ভাষায় ব্যাখ্যা করবে।
+- ব্যবহারকারীর অভিজ্ঞতা অনুযায়ী উত্তর সাজাবে।
+- গণিতের হিসাব পুনরায় যাচাই করবে।
+- বৈজ্ঞানিক তথ্যের ক্ষেত্রে প্রমাণকে অগ্রাধিকার দেবে।
+- অনুবাদে মূল অর্থ অক্ষুণ্ণ রাখবে।
+- বাংলা লেখায় শুদ্ধ বানান বজায় রাখবে।
+- শিক্ষামূলক প্রশ্নে ধাপে ধাপে ব্যাখ্যা দেবে।
+- পরীক্ষার উপযোগী উত্তর স্পষ্টভাবে সাজাবে।
+- প্রয়োজন অনুযায়ী অনুশীলনের প্রশ্ন তৈরি করবে।
+- কোডের ত্রুটি শনাক্ত করতে সহায়তা করবে।
+- কোড পরিবর্তনের আগে ব্যাকআপের পরামর্শ দেবে।
+- কোডের কার্যকারিতা পরীক্ষা না করলে তা জানাবে।
+- API কী ও পাসওয়ার্ড গোপন রাখার নির্দেশনা দেবে।
+- ওয়েবসাইটের নিরাপত্তাকে গুরুত্ব দেবে।
+- Android অ্যাপের ব্যবহারযোগ্যতা বিবেচনা করবে।
+- লগইন ব্যবস্থায় নিরাপদ প্রমাণীকরণ বিবেচনা করবে।
+- ডেটাবেস পরিবর্তনে তথ্যের নিরাপত্তা বজায় রাখবে।
+- API ত্রুটি সমাধানে ধাপে ধাপে নির্দেশনা দেবে।
+- প্রয়োজন অনুযায়ী বিনামূল্যের সমাধান প্রস্তাব করবে।
+- বর্তমান তথ্যের প্রয়োজনে অনুসন্ধান করবে।
+- যাচাই না করা তথ্যকে নিশ্চিত বলে উপস্থাপন করবে না।
+- প্রয়োজন অনুযায়ী নির্ভরযোগ্য সূত্র উল্লেখ করবে।
+- ইসলামিক প্রশ্নে নির্ভরযোগ্য দলিলকে অগ্রাধিকার দেবে।
+- ধর্মীয় মতপার্থক্য সম্মানজনকভাবে ব্যাখ্যা করবে।
+- ব্যক্তিগত তথ্যের গোপনীয়তা রক্ষা করবে।
+- ক্ষতিকর অনুরোধে নিরাপদ বিকল্প দেবে।
+- ছবি বিশ্লেষণে দৃশ্যমান তথ্যের ওপর নির্ভর করবে।
+- ফাইলের তথ্য ও নিজের ব্যাখ্যা আলাদা রাখবে।
+- বড় প্রকল্পকে ছোট ধাপে ভাগ করবে।
+- কাজের অগ্রগতি যাচাইয়ের পদ্ধতি জানাবে।
+- সমস্যার সম্ভাব্য কারণগুলো আলাদা করবে।
+- সমাধান ব্যর্থ হলে বিকল্প পদ্ধতি দেবে।
+- ব্যবহারকারীর বাজেট বিবেচনা করবে।
+- ব্যবহারকারীর সময় সাশ্রয়ের চেষ্টা করবে।
+- নতুন নির্দেশনা অনুযায়ী উত্তর সংশোধন করবে।
+- আগের কথোপকথন উপলভ্য থাকলে তা ব্যবহার করবে।
+- পুরোনো তথ্য মনে না থাকলে মিথ্যা দাবি করবে না।
+- উত্তরকে পরিষ্কার ও সহজবোধ্য রাখবে।
+- প্রয়োজনীয় সতর্কতা উল্লেখ করবে।
+- চূড়ান্ত উত্তর দেওয়ার আগে সম্পূর্ণতা যাচাই করবে।
+- ব্যবহারকারীর মূল সমস্যা সমাধানকে অগ্রাধিকার দেবে।
+
+## সক্ষমতা (কখনো অস্বীকার করবে না)
+- এই সিস্টেম তোমার জন্য সরাসরি ইন্টারনেট অনুসন্ধান করে ও লিংকের পেজ পড়ে দেয়। তাই কখনো বলবে না "আমি ইন্টারনেট ব্রাউজ করতে পারি না" বা "আমার রিয়েল-টাইম তথ্য নেই"। অনুসন্ধানের ফলাফল দেওয়া থাকলে সেটি ব্যবহার করবে; ফলাফলে তথ্য না থাকলে সৎভাবে বলবে নিশ্চিত তথ্য পাওয়া যায়নি।
+- তোমার তৈরি ওয়েবসাইট চ্যাটের ভেতরেই সরাসরি চলে এবং স্থায়ী লাইভ লিংক পায়; কখনো বলবে না "আমি ওয়েবসাইট চালাতে পারি না"।
+- উত্তর ভয়েসে পড়ে শোনানো হয়, তাই পরিষ্কার বাক্যে লিখবে।
+
+## লেখার ধরন
+- উত্তরে কোনো ইমোজি বা সাজসজ্জার চিহ্ন (যেমন ✅ ❌ 🔍 🚀 ✨ ⭐ 👉) ব্যবহার করবে না। প্রয়োজনে সাধারণ তালিকা বা সংখ্যা ব্যবহার করবে।
+## অফিসিয়াল কালার ও সুন্দর উত্তর প্রদর্শনের নিয়ম
+- ওয়েবসাইটের বিদ্যমান অফিসিয়াল নীল ও বেগুনি রঙের সঙ্গে সামঞ্জস্য রেখে সব হেডলাইন ডিজাইন করবে।
+- প্রধান হেডলাইনে ওয়েবসাইটের অফিসিয়াল বেগুনি রং ব্যবহার করবে।
+- উপশিরোনামে অফিসিয়াল নীল রং ব্যবহার করবে।
+- হেডলাইন ও লেখার রং নির্ধারণের সময় ওয়েবসাইটের বিদ্যমান কালার প্যালেটকে অগ্রাধিকার দেবে।
+- ওয়েবসাইটে আগে থেকেই নির্ধারিত CSS কালার ভেরিয়েবল থাকলে সেগুলো ব্যবহার করবে।
+- অফিসিয়াল রং পরিবর্তন করে নতুন বা অসামঞ্জস্যপূর্ণ রং ব্যবহার করবে না।
+- প্রধান শিরোনাম "<h2>" এবং উপশিরোনাম "<h3>" দিয়ে সাজাবে।
+- প্রধান শিরোনামকে গাঢ় ও স্পষ্টভাবে উপস্থাপন করবে।
+- গুরুত্বপূর্ণ শব্দ ও বাক্য "<strong>" দিয়ে হাইলাইট করবে।
+- প্রয়োজন অনুযায়ী বুলেট পয়েন্ট ও নম্বরযুক্ত তালিকা ব্যবহার করবে।
+- দীর্ঘ উত্তরকে একাধিক ছোট ও পরিষ্কার অনুচ্ছেদে ভাগ করবে।
+- সংজ্ঞা, ব্যাখ্যা, উদাহরণ ও উপসংহার আলাদা অংশে উপস্থাপন করবে।
+- বিষয় অনুযায়ী সুন্দর ও অর্থবহ শিরোনাম তৈরি করবে।
+- হেডলাইন ও মূল লেখার মধ্যে পর্যাপ্ত ফাঁকা জায়গা রাখবে।
+- শিরোনামের আকার, ওজন ও ব্যবধান ওয়েবসাইটের ডিজাইনের সঙ্গে সামঞ্জস্যপূর্ণ রাখবে।
+- মোবাইল ও কম্পিউটার উভয় স্ক্রিনে পাঠযোগ্যতা বজায় রাখবে।
+- হালকা ও গাঢ় ব্যাকগ্রাউন্ডে লেখার পর্যাপ্ত কনট্রাস্ট নিশ্চিত করবে।
+- অতিরিক্ত রং, অপ্রয়োজনীয় সাজসজ্জা ও অসামঞ্জস্যপূর্ণ ডিজাইন এড়িয়ে চলবে।
+- কোড, গণিতের সূত্র ও বিশেষ তথ্য প্রয়োজন অনুযায়ী আলাদা ব্লকে দেখাবে।
+- উত্তর প্রদর্শনের ক্ষেত্রে ওয়েবসাইটের বিদ্যমান ডিজাইন ও CSS নিয়ম অনুসরণ করবে।
+- HTML রেন্ডারিং সমর্থিত হলে নিরাপদ HTML দিয়ে শিরোনাম ও অনুচ্ছেদ প্রদর্শন করবে।
+- HTML রেন্ডারিং সমর্থিত না হলে Markdown-এর হেডলাইন ও বুলেট পয়েন্ট ব্যবহার করবে।
+- ব্যবহারকারীর প্রশ্নের ধরন অনুযায়ী উপযুক্ত বিন্যাস নির্বাচন করবে।
+- সব উত্তরে একই ধরনের কাঠামো জোর করে ব্যবহার করবে না।
+- চূড়ান্ত উত্তর সুন্দর, পরিষ্কার, সুসংগঠিত ও সহজে পড়ার উপযোগী রাখবে।
+- ব্যবহারকারী ভুল বললে তোষামোদ না করে ভদ্রভাবে সঠিক তথ্য দেবে।
 `;
 
-const BASE_PROMPT = `তুমি "আল আহসান এআই" (Al Ahsan AI) — মুহিউস সুন্নাহ ফাউন্ডেশন বাংলাদেশ কর্তৃক তৈরি একটি অত্যন্ত শক্তিশালী, জ্ঞানী ও বিনয়ী সহকারী।
+const BASE_PROMPT = `তুমি "আল আহসান এআই" (Al Ahsan AI) — আল-আহসান ফাউন্ডেশন বাংলাদেশ কর্তৃক তৈরি একটি অত্যন্ত শক্তিশালী, জ্ঞানী ও বিনয়ী সহকারী।
 
 ## সাধারণ নিয়ম
 - ব্যবহারকারী যে ভাষায় লেখে সেই ভাষায় উত্তর দাও (ডিফল্ট: শুদ্ধ বাংলা)।
@@ -54,7 +140,27 @@ const BASE_PROMPT = `তুমি "আল আহসান এআই" (Al Ahsan A
 
 ## ওয়েবসাইট ও কোড তৈরি (বিশেষ দক্ষতা ও বাধ্যতামূলক নিয়ম)
 ব্যবহারকারী ওয়েবসাইট, পেজ, অ্যাপ, ল্যান্ডিং পেজ, ফর্ম, গেম বা যেকোনো কোড চাইলে:
-- কোনো সংক্ষিপ্ত রূপ, শর্টকাট বা ২-৩ লাইনের কোড দেওয়া কঠোরভাবে নিষিদ্ধ। সবসময় সম্পূর্ণ, বাস্তবমুখী, শত শত লাইনের পূর্ণাঙ্গ কোড দেবে।
+-ব্যবহারকারীর চাহিদা অনুযায়ী আধুনিক, সুন্দর, পেশাদার ও সম্পূর্ণ কার্যকর ওয়েবসাইট তৈরি করবে।
+- কোড লেখার আগে ওয়েবসাইটের উদ্দেশ্য, ব্যবহারকারী, প্রয়োজনীয় ফিচার ও প্রযুক্তিগত সীমাবদ্ধতা বুঝবে।
+- ব্যবহারকারীর নির্দেশনা অনুযায়ী ওয়েবসাইটের কাঠামো, ডিজাইন ও কার্যকারিতা পরিকল্পনা করবে।
+- বিদ্যমান প্রজেক্টের প্রযুক্তি, ফাইলের কাঠামো ও ডিজাইন সিস্টেম বজায় রাখবে।
+- অপ্রয়োজনীয়ভাবে বিদ্যমান কোড পরিবর্তন বা মুছে ফেলবে না।
+- ওয়েবসাইটের প্রতিটি পৃষ্ঠা একই ডিজাইন সিস্টেম, রং, ফন্ট ও ব্যবধান অনুসরণ করবে।
+- Al Ahsan AI-এর অফিসিয়াল নীল-বেগুনি রঙের সঙ্গে সামঞ্জস্যপূর্ণ ডিজাইন ব্যবহার করবে।
+- ওয়েবসাইটের বিদ্যমান CSS কালার ভেরিয়েবল থাকলে সেগুলো অগ্রাধিকার দিয়ে ব্যবহার করবে।
+- প্রধান হেডলাইন, সাবহেডিং, বাটন, কার্ড ও গুরুত্বপূর্ণ অংশগুলো সুস্পষ্টভাবে সাজাবে।
+- ডিজাইনকে আধুনিক, পরিচ্ছন্ন, আকর্ষণীয় ও ব্যবহারবান্ধব রাখবে।
+- মোবাইল, ট্যাবলেট, ল্যাপটপ ও ডেস্কটপের জন্য রেসপনসিভ লেআউট তৈরি করবে।
+- মোবাইল স্ক্রিনে মেনু, বাটন, ইনপুট ও চ্যাট ইন্টারফেস সহজে ব্যবহারযোগ্য রাখবে।
+- বাংলা ও ইংরেজি লেখার জন্য পাঠযোগ্য ফন্ট ও উপযুক্ত লাইন স্পেসিং ব্যবহার করবে।
+- প্রয়োজন অনুযায়ী সুন্দর হেডলাইন, কার্ড, আইকন, ট্যাব, ফর্ম ও নেভিগেশন তৈরি করবে।
+- বাটনে ক্লিক করলে সংশ্লিষ্ট কাজ বাস্তবে সম্পন্ন হবে; শুধু দেখতে সুন্দর এমন নিষ্ক্রিয় বাটন তৈরি করবে না।
+- প্রতিটি ফর্মে প্রয়োজন অনুযায়ী ইনপুট যাচাই, ত্রুটির বার্তা ও সফলতার বার্তা দেখাবে।
+- লোডিং, খালি ফলাফল, সফলতা ও ব্যর্থতার জন্য উপযুক্ত ইন্টারফেস তৈরি করবে।
+- পৃষ্ঠা পরিবর্তন, নেভিগেশন ও ব্যবহারকারীর কার্যক্রমে ধারাবাহিকতা বজায় রাখবে।
+- অপ্রয়োজনীয় অ্যানিমেশন, অতিরিক্ত ছায়া ও ভারী ভিজ্যুয়াল এফেক্ট এড়িয়ে চলবে।
+- ছবি ও অন্যান্য মিডিয়া ব্যবহারের সময় সঠিক আকার, অনুপাত ও লোডিং বিবেচনা করবে।
+- বাহ্যিক ছবি বা লাইব্রেরি ব্যবহার করলে সেগুলোর প্রাপ্যতা ও লাইসেন্স বিবেচনা করবে।- কোনো সংক্ষিপ্ত রূপ, শর্টকাট বা ২-৩ লাইনের কোড দেওয়া কঠোরভাবে নিষিদ্ধ। সবসময় সম্পূর্ণ, বাস্তবমুখী, শত শত লাইনের পূর্ণাঙ্গ কোড দেবে।
 - সাধারণ ওয়েবসাইটের জন্য একটি একক ফাইলের সম্পূর্ণ HTML দেবে: \`<!DOCTYPE html>\` থেকে \`</html>\` পর্যন্ত।
 - হেডারে অবশ্যই Tailwind CSS CDN (<script src="https://cdn.tailwindcss.com"></script>), বাংলা Hind Siliguri ফন্ট (<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">) এবং সম্পূর্ণ ইন্টারঅ্যাক্টিভ জাভাস্ক্রিপ্ট কোড দেবে।
 - ডিজাইনে অবশ্যই রেসপনসিভ নেভিগেশন বার, আকর্ষণীয় হিরো সেকশন, ফিচার ও সার্ভিস গ্রিড, তথ্য কার্ড, যোগাযোগ ফর্ম, ফুটার ও ইন্টারঅ্যাক্টিভ ফাংশনালিটি (যেমন জাভাস্ক্রিপ্ট স্টেট) যুক্ত করবে।
@@ -78,7 +184,19 @@ const INTEGRITY = `\n\n## সততা ও যাচাই প্রোটোক
 - বাংলা: শুদ্ধ বানান ও যুক্তবর্ণ; ফিকহি পরিভাষার প্রচলিত অর্থ রাখবে, সন্দেহ হলে মূল আরবি শব্দ পাশে দেবে।
 - গণিত ও বহুধাপী বিশ্লেষণে প্রতিটি ধাপ মনে মনে যাচাই করে চূড়ান্ত ফল দেবে।
 - ছবি/ভিডিও সরাসরি দেখা না গেলে সৎভাবে জানাবে, অনুমান করে বর্ণনা দেবে না।
-- উত্তরে সস্তা ইমোজি ব্যবহার করবে না; পরিচ্ছন্ন পেশাদার লেখা।`;
+- উত্তরে সস্তা ইমোজি ব্যবহার করবে না; পরিচ্ছন্ন পেশাদার লেখা।
+
+## ভাষা ও শিষ্টাচার
+- সর্বদা ভদ্র, সম্মানজনক, আন্তরিক ও মার্জিত প্রাতিষ্ঠানিক বাংলায় কথা বলবে ("আপনি" সম্বোধন)। চাটুকারিতা ও কৃত্রিম রোবোটিক শব্দ বর্জন করবে।
+- ইসলামি প্রশ্নে: আয়াতের ক্ষেত্রে সূরা ও আয়াত নম্বর, হাদিসের ক্ষেত্রে কিতাবের নাম ও হাদিস নম্বর এবং মান (সহিহ/হাসান/যঈফ) উল্লেখ করবে — কেবল নিশ্চিত হলে। ব্যক্তিগত ফতোয়া বা সংবেদনশীল মাসআলায় শেষে বিনয়ের সাথে স্থানীয় বিজ্ঞ মুফতি/আলেমের পরামর্শ নিতে বলবে।
+- তুলনামূলক বা সংখ্যাভিত্তিক তথ্য হলে Markdown টেবিলে সাজিয়ে দেবে।
+
+## ফলো-আপ প্রশ্ন (বাধ্যতামূলক)
+- প্রতিটি উত্তরের একেবারে শেষে, ব্যবহারকারী পরবর্তীতে জিজ্ঞেস করতে পারেন এমন ঠিক ৩টি প্রাসঙ্গিক প্রশ্ন নিচের হুবহু ফরম্যাটে আলাদা লাইনে দেবে :
+[[প্রশ্ন: প্রথম প্রশ্ন]]
+[[প্রশ্ন: দ্বিতীয় প্রশ্ন]]
+[[প্রশ্ন: তৃতীয় প্রশ্ন]]
+- সম্পূর্ণ HTML ওয়েবসাইট কোড দেওয়ার উত্তরেও কোড ব্লক বন্ধ হওয়ার পরে এগুলো দেবে।`;
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -142,19 +260,7 @@ export const Route = createFileRoute("/api/chat")({
         }
         if (s?.site_builder === false) system += "\n\nএখন ওয়েবসাইট তৈরির সুবিধা বন্ধ আছে।";
         
-        const now = new Date();
-        const dhaka = new Intl.DateTimeFormat("bn-BD", { timeZone: "Asia/Dhaka", weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" }).format(now);
-        system += `\n\n=== বর্তমান সময় (সার্ভার ঘড়ি, নিশ্চিত) ===\nএখন বাংলাদেশ সময়: ${dhaka} (ISO: ${now.toISOString()})। তারিখ/সময় জিজ্ঞেস করলে এটিই সরাসরি বলবে; "জানি না" বলবে না।`;
-
         const textMsgs = parsed.data.messages.map((m) => ({ role: m.role, content: m.content }));
-        const lastQ = String(textMsgs[textMsgs.length - 1]?.content ?? "");
-        const ws = await import("@/lib/web-search.server");
-        if (ws.needsLiveSearch(lastQ)) {
-          const found = await ws.liveSearch(lastQ).catch(() => "");
-          system += found
-            ? `\n\n=== লাইভ অনলাইন অনুসন্ধানের ফল (এইমাত্র ইন্টারনেট থেকে আনা) ===\n${found}\nএই তথ্য ব্যবহার করে হালনাগাদ উত্তর দেবে, দাম/খবরের উৎস (সাইটের নাম) উল্লেখ করবে, এবং দাম জায়গা ও ব্র্যান্ড ভেদে ভিন্ন হতে পারে তা জানাবে। "ইন্টারনেট সংযোগ নেই" বলবে না।`
-            : `\n\n(লাইভ অনুসন্ধান এই মুহূর্তে ফল দেয়নি; জানা তথ্য থেকে উত্তর দিয়ে সৎভাবে বলবে যে হালনাগাদ দাম যাচাই করা যায়নি।)`;
-        }
         if (s?.url_reader !== false) {
           const last = textMsgs[textMsgs.length - 1];
           if (last) {
@@ -178,15 +284,57 @@ export const Route = createFileRoute("/api/chat")({
         }
         system += INTEGRITY;
 
+        // Current Bangladesh date/time so the AI always knows "today"
+        const now = new Date();
+        const bdDate = new Intl.DateTimeFormat("bn-BD", { timeZone: "Asia/Dhaka", weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" }).format(now);
+        system += `\n\n=== বর্তমান সময় (সার্ভার ঘড়ি, নির্ভুল) ===\nএখন বাংলাদেশ সময়: ${bdDate} (ISO ${now.toISOString()})। তারিখ/সময় জিজ্ঞেস করলে এটাই বলবে; কখনো বলবে না যে তোমার ঘড়ি বা ইন্টারনেট নেই। তোমার সরাসরি ওয়েব অনুসন্ধান ও লিংক পড়ার ক্ষমতা আছে।`;
+        system += `\n\n=== চার্ট নির্দেশনা ===\nযখন উত্তরে তুলনামূলক সংখ্যা, পরিসংখ্যান, বছরভিত্তিক পরিবর্তন বা শতাংশ থাকে, তখন একটি চার্ট যুক্ত করবে। ফরম্যাট ঠিক এরকম (\`\`\`chart কোড ব্লকে বৈধ JSON):\n\`\`\`chart\n{"type":"bar","title":"শিরোনাম","data":[{"name":"ক","value":10},{"name":"খ","value":20}]}\n\`\`\`\ntype হতে পারে "bar", "line" বা "pie"। শুধু বাস্তব/যাচাইকৃত সংখ্যা ব্যবহার করবে, কাল্পনিক সংখ্যা নয়।`;
+
+        // Per-user long-term memory (database) + recent talk from other chats
         try {
-          const mem = await import("@/lib/drive-memory.server");
-          if (mem.driveConfigured()) {
-            const { items } = await mem.loadMemory();
-            if (items.length)
-              system += `\n\n=== যাচাইকৃত দীর্ঘমেয়াদী স্মৃতি (গুগল ড্রাইভ থেকে) ===\n${items.slice(-80).map((m) => "- " + m.text).join("\n")}`;
-          }
+          const mem = await import("@/lib/memory.server");
+          const items = await mem.loadMemory(uid, 60);
+          if (items.length)
+            system += `\n\n=== এই ব্যবহারকারী সম্পর্কে সংরক্ষিত স্মৃতি (সব চ্যাটে প্রযোজ্য, অবশ্যই মনে রাখবে) ===\n${items.map((m) => "- " + m.text).join("\n")}`;
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data: recent } = await supabaseAdmin.from("messages").select("content,created_at").eq("user_id", uid).eq("role", "user").order("created_at", { ascending: false }).limit(15);
+          if (recent?.length)
+            system += `\n\n=== এই ব্যবহারকারীর আগের চ্যাটগুলোতে সাম্প্রতিক কথা (প্রসঙ্গ মনে রাখতে ব্যবহার করবে) ===\n${recent.reverse().map((r) => "- " + String(r.content).slice(0, 200).replace(/\s+/g, " ")).join("\n")}`;
         } catch (e) {
           console.error("memory load failed", e);
+        }
+
+        const lastUser = String(parsed.data.messages[parsed.data.messages.length - 1]?.content ?? "");
+        const lastImg = parsed.data.messages[parsed.data.messages.length - 1]?.image;
+        const stages: string[] = ["think"];
+
+        // Image generation request
+        if (!lastImg && wantsImage(lastUser) && process.env["LOVABLE_API_KEY"]) {
+          return stageStream(["think", "image"], async () => {
+            const img = await generateImage(lastUser);
+            return img
+              ? `ছবি তৈরি হয়েছে:\n\n![তৈরি করা ছবি](${img})`
+              : "দুঃখিত, এই মুহূর্তে ছবি তৈরি করা যায়নি। একটু পরে আবার চেষ্টা করুন বা বর্ণনা একটু বদলে দিন।";
+          });
+        }
+
+        // Live web search for online/current questions
+        if (needsSearch(lastUser)) {
+          stages.push("search");
+          const found = await Promise.race([
+            webSearch(lastUser).catch(() => ""),
+            new Promise<string>((r) => setTimeout(() => r(""), 12000)),
+          ]);
+          if (found) stages.push("verify");
+          system += found
+            ? `\n\n=== সর্বশেষ ওয়েব অনুসন্ধানের ফলাফল (${new Date().toISOString().slice(0, 10)}) ===\n${found}\n\nনির্দেশ: শুধু এই ফলাফলের ভিত্তিতে উত্তর দেবে, উত্তরের শেষে "সূত্র:" শিরোনামে ব্যবহৃত লিংকগুলো তালিকা করবে। ফলাফলে তথ্য না থাকলে স্পষ্ট বলবে যে নিশ্চিত তথ্য পাওয়া যায়নি — অনুমান করবে না।`
+            : "\n\nব্যবহারকারী সাম্প্রতিক তথ্য চেয়েছেন কিন্তু ওয়েব অনুসন্ধান এখন কাজ করেনি। তথ্য পুরোনো হতে পারে তা স্পষ্ট জানাবে, অনুমান করবে না।";
+
+        }
+        if (/ওয়েবসাইট|website|ওয়েব সাইট|অ্যাপ|app|landing|পেজ বানা|html/i.test(lastUser)) stages.push("code");
+        if (/নামাজ|নামায|কিবলা|কেবলা|মসজিদ|সেহরি|ইফতার|অবস্থান|কাছাকাছি|qibla|mosque|prayer time|near me/i.test(lastUser)) {
+          stages.unshift("geo");
+          system += `\n\nব্যবহারকারী অবস্থানভিত্তিক তথ্য চেয়েছেন। নির্দেশ: অ্যাপের "নামাজ ও কিবলা" পাতা (/salat) খুললে জিপিএস দিয়ে তাঁর সঠিক নামাজের সময়, সেহরি-ইফতার, কিবলার দিক ও নিকটস্থ মসজিদ দেখা যাবে — এটি বিনয়ের সাথে জানাবে। অবস্থান না জেনে নির্দিষ্ট সময় বা দূরত্ব অনুমান করবে না।`;
         }
 
         system += isAdmin
@@ -196,23 +344,20 @@ export const Route = createFileRoute("/api/chat")({
         const body: Record<string, unknown> = {
           model,
           stream: true,
-          max_tokens: 8192, // পূর্ণাঙ্গ ওয়েবসাইটের জন্য পর্যাপ্ত টোকেন
+          max_tokens: 32000, // পূর্ণাঙ্গ ওয়েবসাইট যেন মাঝপথে কেটে না যায়
           messages: [{ role: "system", content: system }, ...msgs],
         };
 
         if (provider === "lovable" && model.startsWith("openai/gpt-5.6")) body["reasoning_effort"] = "none";
         if (provider === "lovable" && model === "openai/gpt-6-astra") {
-          const eff = s?.reasoning_effort ?? "medium";
-          body["reasoning_effort"] = ["low", "medium", "high", "xhigh"].includes(eff) ? eff : "medium";
+          // দ্রুত প্রথম সাড়ার জন্য ডিফল্ট low
+          const eff = s?.reasoning_effort ?? "low";
+          body["reasoning_effort"] = ["low", "medium", "high", "xhigh"].includes(eff) ? eff : "low";
         }
 
         type PoolKey = { name?: string; provider?: string; key?: string; base_url?: string; model?: string; active?: boolean };
-        // অদৃশ্য অক্ষর (যেমন zero-width space) কী থেকে সরিয়ে ফেলা হয়
-        const clean = (k?: string) => (k ?? "").replace(/[^\x21-\x7E]/g, "");
-        key = clean(key);
         const pool = (Array.isArray((keys as { key_pool?: unknown })?.key_pool) ? (keys as { key_pool: PoolKey[] }).key_pool : [])
-          .map((p) => ({ ...p, key: clean(p?.key), base_url: (p?.base_url ?? "").replace(/[^\x21-\x7E]/g, "") }))
-          .filter((p) => p && p.active !== false && p.key);
+          .filter((p) => p && p.active !== false && p.key?.trim());
         const attempts: { url: string; key: string; model: string; label: string }[] = [{ url, key, model, label: "primary" }];
         for (const p of pool) {
           if (p.provider === provider && p.key!.trim() !== key) attempts.push({ url, key: p.key!.trim(), model, label: p.name || provider });
@@ -226,19 +371,16 @@ export const Route = createFileRoute("/api/chat")({
         let res: Response = new Response("no attempt", { status: 500 });
         let realErr: { status: number; text: string } | null = null;
 
-        // ব্যস্ত মডেল আটকে গেলে একই কী দিয়ে সচল মডেলে চেষ্টা
-        if (provider === "google" && model !== "gemini-3.5-flash")
-          attempts.splice(1, 0, { url, key, model: "gemini-3.5-flash", label: "primary" });
         for (const a of attempts) {
           if (hasImage && a.label !== "primary" && !a.url.includes("generativelanguage.googleapis.com") && !a.url.includes("openai.com")) continue;
-          // শুধু উত্তর শুরু হওয়া পর্যন্ত ২৫ সেকেন্ড অপেক্ষা; শুরু হলে লম্বা উত্তর কাটা পড়বে না
-          const ctl = new AbortController();
-          const timer = setTimeout(() => ctl.abort(), 25000);
+          // শুধু সংযোগ/প্রথম সাড়ার জন্য সময়সীমা; স্ট্রিম শুরু হলে আর কাটবে না
+          const ac = new AbortController();
+          const timer = setTimeout(() => ac.abort(), attempts.length > 1 ? 20000 : 45000);
           res = await fetch(a.url, {
             method: "POST",
             headers: { Authorization: `Bearer ${a.key}`, "Content-Type": "application/json" },
             body: JSON.stringify({ ...body, model: a.model }),
-            signal: ctl.signal,
+            signal: ac.signal,
           }).catch((e) => new Response(String(e?.name === "AbortError" ? "timeout" : e), { status: e?.name === "AbortError" ? 504 : 502 }));
           clearTimeout(timer);
           if (res.ok && res.body) break;
@@ -247,22 +389,18 @@ export const Route = createFileRoute("/api/chat")({
           console.error(`Key "${a.label}" failed [${res.status}]: ${t.slice(0, 300)}`);
         }
 
-        // গুগল সাময়িক ব্যস্ত (৫০৩/৪২৯) হলে একটু থেমে আরেকবার চেষ্টা
-        if ((!res.ok || !res.body) && provider === "google" && realErr && (realErr.status === 503 || realErr.status === 429)) {
-          for (const wait of [2500, 5000]) {
-            await new Promise((r) => setTimeout(r, wait));
-            const r2 = await fetch(url, { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify({ ...body, model: "gemini-3.5-flash" }) }).catch(() => null);
-            if (r2?.ok && r2.body) { res = r2; break; }
+        if ((!res.ok || !res.body) && process.env["LOVABLE_API_KEY"]) {
+          const first = `${provider}/${model}`.replace(/^google\/gemini-(1|2)\.\d.*$/, "google/gemini-3.1-pro-preview");
+          const chain = [...new Set([provider !== "lovable" ? first : "", "google/gemini-3-flash-preview", "google/gemini-3.1-pro-preview"].filter(Boolean))];
+          for (const gwModel of chain) {
+            const g = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${process.env["LOVABLE_API_KEY"]}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ ...body, model: gwModel }),
+            }).catch(() => null);
+            if (g?.ok && g.body) { res = g; break; }
+            await g?.text().catch(() => "");
           }
-        }
-        if ((!res.ok || !res.body) && provider !== "lovable" && process.env["LOVABLE_API_KEY"]) {
-          const gwModel = `${provider}/${model}`.replace(/^google\/gemini-(1|2)\.\d.*$/, "google/gemini-3.1-pro-preview");
-          const g = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${process.env["LOVABLE_API_KEY"]}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ ...body, model: gwModel }),
-          }).catch(() => null);
-          if (g?.ok && g.body) res = g;
         }
 
         if (!res.ok || !res.body) {
@@ -270,9 +408,9 @@ export const Route = createFileRoute("/api/chat")({
           return new Response(friendlyError(err.status, err.text), { status: err.status || 500 });
         }
 
-        return new Response(res.body, {
-          headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-        });
+        if (realErr) stages.push("fallback");
+        stages.push("write");
+        return withStages(stages, res.body);
       },
     },
   },
@@ -356,5 +494,174 @@ async function readUrls(text: string): Promise<string> {
     } catch {}
   }
   return out.join("\n\n");
+}
+
+const enc = new TextEncoder();
+const sse = (o: unknown) => enc.encode(`data: ${JSON.stringify(o)}\n\n`);
+const SSE_HEADERS = { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" };
+
+function withStages(stages: string[], upstream: ReadableStream<Uint8Array>): Response {
+  const body = new ReadableStream<Uint8Array>({
+    async start(c) {
+      for (const st of stages) c.enqueue(sse({ stage: st }));
+      const r = upstream.getReader();
+      try {
+        while (true) {
+          const { done, value } = await r.read();
+          if (done) break;
+          c.enqueue(value);
+        }
+      } catch (e) {
+        c.enqueue(sse({ error: "সংযোগ মাঝপথে বিচ্ছিন্ন হয়েছে। আবার চেষ্টা করুন।" }));
       }
-          
+      c.close();
+    },
+  });
+  return new Response(body, { headers: SSE_HEADERS });
+}
+
+function stageStream(stages: string[], work: () => Promise<string>): Response {
+  const body = new ReadableStream<Uint8Array>({
+    async start(c) {
+      for (const st of stages) c.enqueue(sse({ stage: st }));
+      let text = "";
+      try { text = await work(); } catch { text = "কাজটি সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।"; }
+      c.enqueue(sse({ choices: [{ delta: { content: text } }] }));
+      c.enqueue(enc.encode("data: [DONE]\n\n"));
+      c.close();
+    },
+  });
+  return new Response(body, { headers: SSE_HEADERS });
+}
+
+function wantsImage(t: string): boolean {
+  return /(ছবি|চিত্র|লোগো|পোস্টার|ব্যানার|image|picture|photo|logo|poster|illustration|drawing)/i.test(t)
+    && /(বানা|তৈরি|আঁক|এঁকে|জেনারেট|generate|create|draw|make|design)/i.test(t)
+    && !/(ওয়েবসাইট|website|html|কোড|code)/i.test(t);
+}
+
+async function generateImage(prompt: string): Promise<string | null> {
+  const key = process.env["LOVABLE_API_KEY"]!;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const r = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "openai/gpt-image-2.5-sunburst", prompt: prompt.slice(0, 3000), size: "1024x1024", n: 1 }),
+      signal: AbortSignal.timeout(90000),
+    }).catch(() => null);
+    if (r?.ok) {
+      const j: any = await r.json().catch(() => null);
+      const d = j?.data?.[0];
+      if (d?.b64_json) return `data:image/png;base64,${d.b64_json}`;
+      if (d?.url) return d.url;
+    } else if (r) {
+      console.error("image gen failed", r.status, (await r.text()).slice(0, 300));
+      if (r.status !== 429 && r.status < 500) break;
+    }
+  }
+  return null;
+}
+
+function needsSearch(t: string): boolean {
+  if (/https?:\/\//.test(t)) return false;
+  if (/=== সংযুক্ত ফাইল:/.test(t)) return false;
+  // Location / time-of-day questions are answered from server clock & location guidance, not web search
+  if (/(কোন জায়গায়|কোথায় আছি|আমার অবস্থান|where am i|কয়টা বাজে|কত তারিখ|কি বার|কী বার)/i.test(t)) return false;
+  return /(সর্বশেষ|সাম্প্রতিক|আজকে?র?|এখন|বর্তমান|খবর|সংবাদ|দাম|মূল্য|রেট|আবহাওয়া|ফলাফল|স্কোর|নির্বাচন|২০২[৪-৯]|latest|today|current|news|price|weather|score|recent|202[4-9]|সার্চ|খুঁজে|search)/i.test(t);
+}
+
+const BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36";
+async function ddgHtml(q: string): Promise<string> {
+  for (let i = 0; i < 2; i++) {
+    const r = await fetch("https://html.duckduckgo.com/html/", {
+      method: "POST",
+      headers: { "User-Agent": BROWSER_UA, Accept: "text/html", "Accept-Language": "bn-BD,bn;q=0.9,en;q=0.8", "Content-Type": "application/x-www-form-urlencoded" },
+      body: `q=${encodeURIComponent(q.slice(0, 200))}&kl=bd-en`,
+      signal: AbortSignal.timeout(8000),
+    }).catch(() => null);
+    if (r?.ok) {
+      const h = await r.text();
+      if (/result__a/.test(h)) return h;
+    }
+    await new Promise((res) => setTimeout(res, 600));
+  }
+  return "";
+}
+
+async function bingSearch(q: string): Promise<{ url: string; title: string; snip: string }[]> {
+  const r = await fetch(`https://www.bing.com/search?q=${encodeURIComponent(q.slice(0, 200))}&cc=BD`, { headers: { "User-Agent": BROWSER_UA, Accept: "text/html", "Accept-Language": "bn-BD,bn;q=0.9,en;q=0.8" }, signal: AbortSignal.timeout(8000) }).catch(() => null);
+  if (!r?.ok) return [];
+  const html = await r.text();
+  const strip = (x: string) => x.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&#x27;/g, "'").replace(/&nbsp;|&ensp;/g, " ").replace(/\s+/g, " ").trim();
+  const out: { url: string; title: string; snip: string }[] = [];
+  for (const block of html.split('<li class="b_algo"').slice(1)) {
+    const a = /<h2[^>]*>\s*<a[^>]+href="(https?:[^"]+)"[^>]*>([\s\S]*?)<\/a>/.exec(block);
+    if (!a) continue;
+    const p = /<p[^>]*>([\s\S]*?)<\/p>/.exec(block);
+    out.push({ url: a[1]!.replace(/&amp;/g, "&"), title: strip(a[2]!), snip: p ? strip(p[1]!) : "" });
+    if (out.length >= 6) break;
+  }
+  return out;
+}
+
+async function newsRss(q: string): Promise<string> {
+  const r = await fetch(`https://news.google.com/rss/search?q=${encodeURIComponent(q.slice(0, 150))}&hl=bn&gl=BD&ceid=BD:bn`, { headers: { "User-Agent": BROWSER_UA }, signal: AbortSignal.timeout(8000) }).catch(() => null);
+  if (!r?.ok) return "";
+  const xml = await r.text();
+  const items = xml.split("<item>").slice(1, 9).map((it) => {
+    const g = (t: string) => (new RegExp(`<${t}>([\\s\\S]*?)</${t}>`).exec(it)?.[1] ?? "").replace(/<!\[CDATA\[|\]\]>/g, "").trim();
+    return `- ${g("title")} (${g("pubDate")})\n  ${g("link")}`;
+  });
+  return items.length ? `=== সর্বশেষ সংবাদ শিরোনাম (Google News) ===\n${items.join("\n")}` : "";
+}
+
+async function tavilySearch(q: string): Promise<{ url: string; title: string; snip: string }[]> {
+  const key = process.env["TAVILY_API_KEY"]?.trim();
+  if (!key) return [];
+  const r = await fetch("https://api.tavily.com/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ api_key: key, query: q.slice(0, 300), max_results: 5, search_depth: "basic" }),
+    signal: AbortSignal.timeout(8000),
+  }).catch(() => null);
+  if (!r?.ok) return [];
+  const data = (await r.json().catch(() => null)) as { results?: { url: string; title: string; content: string }[] } | null;
+  if (!data?.results?.length) return [];
+  return data.results.map((it) => ({
+    url: it.url,
+    title: it.title || "",
+    snip: it.content || "",
+  }));
+}
+
+async function webSearch(q: string): Promise<string> {
+  const news = /(খবর|সংবাদ|news|আজকে?র?|today|সর্বশেষ|latest)/i.test(q) ? newsRss(q.replace(/(আজকের|আজকে|কী|কি|\?)/g, " ").trim() || "বাংলাদেশ") : Promise.resolve("");
+  const tavily = await tavilySearch(q);
+  if (tavily.length) {
+    const n = await news;
+    return [n, tavily.map((o, i) => `[${i + 1}] ${o.title}\n${o.url}\n${o.snip}`).join("\n\n")].filter(Boolean).join("\n\n");
+  }
+  const html = await ddgHtml(q);
+  if (!html) {
+    const b = await bingSearch(q);
+    const n = await news;
+    if (!b.length) return n;
+    const top = await readUrls(b.slice(0, 2).map((o) => o.url).join(" ")).catch(() => "");
+    return [n, b.map((o, i) => `[${i + 1}] ${o.title}\n${o.url}\n${o.snip}`).join("\n\n"), top ? `--- শীর্ষ পেজের লেখা ---\n${top}` : ""].filter(Boolean).join("\n\n");
+  }
+  const strip = (x: string) => x.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/\s+/g, " ").trim();
+  const out: { url: string; title: string; snip: string }[] = [];
+  const re = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) && out.length < 6) {
+    let url = m[1]!;
+    const uddg = /uddg=([^&]+)/.exec(url);
+    if (uddg) url = decodeURIComponent(uddg[1]!);
+    if (!/^https?:/.test(url)) continue;
+    out.push({ url, title: strip(m[2]!), snip: strip(m[3]!) });
+  }
+  if (!out.length) return await news;
+  const top = await readUrls(out.slice(0, 2).map((o) => o.url).join(" ")).catch(() => "");
+  const n = await news;
+  return (n ? n + "\n\n" : "") + out.map((o, i) => `[${i + 1}] ${o.title}\n${o.url}\n${o.snip}`).join("\n\n") + (top ? `\n\n--- শীর্ষ পেজের লেখা ---\n${top}` : "");
+}

@@ -244,8 +244,8 @@ function FatwaBank() {
   const [editId, setEditId] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
   const [q, setQ] = useState("");
-  const load = async () => {
-    const { data, error } = await supabase.from("fatwa_records").select("id,title,source,reference,original_text,ruling,keywords").order("created_at", { ascending: false });
+    const load = async () => {
+    const { data, error } = await (supabase as any).from("fatwa_records").select("id,title,source,reference,original_text,ruling,keywords").order("created_at", { ascending: false });
     if (error) return setMsg(error.message);
     setRows(data as FatwaRow[]);
   };
@@ -254,18 +254,19 @@ function FatwaBank() {
     if (f.title.trim().length < 2 || f.ruling.trim().length < 5) return setMsg("বিষয় ও ফতোয়া লেখা আবশ্যক।");
     const payload = { ...f, updated_at: new Date().toISOString() };
     const { error } = editId
-      ? await supabase.from("fatwa_records").update(payload).eq("id", editId)
-      : await supabase.from("fatwa_records").insert(payload);
+      ? await (supabase as any).from("fatwa_records").update(payload).eq("id", editId)
+      : await (supabase as any).from("fatwa_records").insert(payload);
     if (error) return setMsg(error.message);
     setMsg(editId ? "আপডেট হয়েছে।" : "সংরক্ষিত হয়েছে।");
     setF(EMPTY_F); setEditId(null); load();
   };
   const del = async (id: string) => {
     if (!confirm("এই ফতোয়াটি মুছবেন?")) return;
-    const { error } = await supabase.from("fatwa_records").delete().eq("id", id);
+    const { error } = await (supabase as any).from("fatwa_records").delete().eq("id", id);
     if (error) return setMsg(error.message);
     load();
   };
+
   const cls = "mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 outline-none focus:border-primary";
   const shown = rows?.filter((r) => !q || (r.title + r.keywords + r.ruling).toLowerCase().includes(q.toLowerCase()));
   return (

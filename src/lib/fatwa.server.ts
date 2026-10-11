@@ -29,9 +29,9 @@ export function rankFatwas(question: string, rows: Fatwa[], limit = 4): Fatwa[] 
 
 export async function findFatwas(question: string): Promise<Fatwa[]> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin.from("fatwa_records").select("title,source,reference,original_text,ruling,keywords").limit(2000);
+  const { data, error } = await (supabaseAdmin as any).from("fatwa_records").select("title,source,reference,original_text,ruling,keywords").limit(2000);
   if (error || !data) return [];
-  return rankFatwas(question, data);
+  return rankFatwas(question, data as any);
 }
 
 export function fatwaPrompt(items: Fatwa[]): string {
